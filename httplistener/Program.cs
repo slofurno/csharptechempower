@@ -33,7 +33,7 @@ namespace httplistener
 
       while (true)
       {
-        var context = await listener.GetContextAsync();
+        var context = await listener.GetContextAsync().ConfigureAwait(false);
         Serve(context);
 
       }
@@ -73,8 +73,7 @@ namespace httplistener
         response.ContentLength64 = buffer.Length;
         using (var output = response.OutputStream)
         {
-          output.Write(buffer, 0, buffer.Length);
-          output.Flush();
+          await output.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
         }
       }
 
