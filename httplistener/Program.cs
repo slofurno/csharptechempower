@@ -47,7 +47,7 @@ namespace httplistener
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
         TcpClient client = await server.AcceptTcpClientAsync();
-        Serve(client);
+        Task.Run(()=>Serve(client));
 
       }
     }
