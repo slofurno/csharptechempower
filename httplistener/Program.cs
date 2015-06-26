@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 
+using System.Data.SQLite;
 using Mono.Data.Sqlite;
 
 using Jil;
@@ -36,7 +37,7 @@ namespace httplistener
       while (true)
       {
         var context = await listener.GetContextAsync().ConfigureAwait(false);
-        Serve(context);
+        Task.Run(()=>Serve(context));
 
       }
     }
@@ -197,9 +198,9 @@ namespace httplistener
   public static class SqliteContext
   {
     public static string datasource;
-    public static SqliteConnection GetConnection()
+    public static SQLiteConnection GetConnection()
     {
-      return new SqliteConnection("Data Source=" + datasource);
+      return new SQLiteConnection("Data Source=" + datasource);
     }
   
   }

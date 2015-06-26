@@ -17,3 +17,5 @@ C:\dev\csharp\httplistener\httplistener\obj\Debug\httplistener.csprojResolveAsse
 C:\dev\csharp\httplistener\httplistener\obj\Debug\httplistener.exe
 C:\dev\csharp\httplistener\httplistener\obj\Debug\httplistener.pdb
 C:\dev\csharp\httplistener\httplistener\bin\Debug\fortunes.sqlite
+C:\dev\csharp\httplistener\httplistener\bin\Debug\System.Data.SQLite.dll
+C:\dev\csharp\httplistener\httplistener\bin\Debug\System.Data.SQLite.xml
