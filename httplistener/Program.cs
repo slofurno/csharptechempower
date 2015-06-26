@@ -282,22 +282,27 @@ namespace httplistener
   public static class SqliteContext
   {
 
-    public static SQLiteConnection conn = new SQLiteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=100");
+#if __MonoCS__
+    public static SqliteConnection conn = new SqliteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=20");
+#else
+
+    public static SQLiteConnection conn = new SQLiteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=20");
+#endif
 
     public static string datasource;
-    #if __MonoCS__
+#if __MonoCS__
     public static SqliteConnection GetConnection()
     {
-      return new SqliteConnection("Data Source=" + datasource);
+      return conn;
     }
-    #else 
+#else 
     public static SQLiteConnection GetConnection()
     {
       return conn;
       
     }
 
-    #endif
+#endif
 
   }
 
