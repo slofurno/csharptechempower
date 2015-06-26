@@ -42,7 +42,7 @@ namespace httplistener
       while (true)
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
-        TcpClient client = await server.AcceptTcpClientAsync();
+        TcpClient client = await server.AcceptTcpClientAsync().ConfigureAwait(false);
         Serve(client);
 
       }
@@ -60,7 +60,7 @@ namespace httplistener
       {
 
 
-        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
+        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024).ConfigureAwait(false)) > 0)
         {
           for (var i = 0; i < read; i++)
           {
@@ -80,22 +80,22 @@ namespace httplistener
           switch (url[0])
           {
             case "/plaintext":
-              await Plaintext(writer);
+              await Plaintext(writer).ConfigureAwait(false);
               break;
             case "/json":
-              await Json(writer);
+              await Json(writer).ConfigureAwait(false);
               break;
             case "/db":
-              await Db(writer);
+              await Db(writer).ConfigureAwait(false);
               break;
             case "/fortunes":
-              await Fortunes(writer);
+              await Fortunes(writer).ConfigureAwait(false);
               break;
             case "/queries":
-              await Queries(writer, url);
+              await Queries(writer, url).ConfigureAwait(false);
               break;
             default:
-              await NotFound(writer);
+              await NotFound(writer).ConfigureAwait(false);
               break;
           }
         }
@@ -120,8 +120,8 @@ namespace httplistener
     private static async Task NotFound(StreamWriter response)
     {
       var body = "Not Found!";
-      await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
-      await response.FlushAsync();
+      response.Write(string.Format(RESPONSE, body.Length, "text/plain", body));
+      response.Flush();
 
     }
 
@@ -137,8 +137,8 @@ namespace httplistener
     {
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
-      await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
-      await response.FlushAsync();
+      response.Write(string.Format(RESPONSE, json.Length, "application/json", json));
+      response.Flush();
 
     }
 
