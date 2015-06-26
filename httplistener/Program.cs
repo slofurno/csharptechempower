@@ -43,7 +43,6 @@ namespace httplistener
 
     static async Task Serve(HttpListenerContext context)
     {
-      await Task.Yield();
       var request = context.Request;
       using (var response = context.Response)
       {
