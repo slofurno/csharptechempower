@@ -62,8 +62,6 @@ namespace httplistener
 
         while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
         {
-          Console.WriteLine("read: " + read);
-
           for (var i = 0; i < read; i++)
           {
             if (header[i] == del)
@@ -75,9 +73,15 @@ namespace httplistener
         }
 
         var get = Encoding.UTF8.GetString(header, 0, hlen);
+        string queryString = null;
+
         var url = get.Split(' ')[1].Split('?');
 
-        string responseString = null;
+        if (url.Length > 1)
+        {
+          queryString = url[1];
+        }
+
         using (var writer = new StreamWriter(rw))
         {
           switch (url[0])
@@ -95,14 +99,7 @@ namespace httplistener
               await Fortunes(writer);
               break;
             case "/queries":
-              if (url.Length > 0)
-              {
-                await Queries(writer, url[1]);
-              }
-              else
-              {
-                await Queries(writer, "");
-              }
+              await Queries(writer, parseQuery(queryString));
               break;
             default:
               await NotFound(writer);
@@ -153,10 +150,8 @@ namespace httplistener
 
     }
 
-    private static async Task Queries(StreamWriter response, string queryString)
+    private static async Task Queries(StreamWriter response, Dictionary<string,string> qs)
     {
-
-      var qs = parseQuery(queryString);
       string raw;
       int count = 1;
 
@@ -184,18 +179,22 @@ namespace httplistener
 
 
       var json = JSON.Serialize<RandomNumber[]>(results);
-      Console.WriteLine(json);
-
 
       await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
       await response.FlushAsync();
 
     }
 
-    static Dictionary<string, string> parseQuery(string qs)
+    static Dictionary<string, string> parseQuery(string queryString)
     {
-      var s = qs.Split('&');
       var r = new Dictionary<string, string>();
+
+      if (queryString == null)
+      {
+        return r;
+      }
+
+      var s = queryString.Split('&');
 
       foreach (var p in s)
       {
