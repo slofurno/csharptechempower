@@ -234,19 +234,13 @@ namespace httplistener
     
     private static Task Fortunes(StreamWriter response)
     {
-
-      if (CACHED != null)
-      {
-        return response.WriteAsync(string.Format(RESPONSE, CACHED.Length, "text/html", CACHED));
-
-      }
-
       List<Fortune> fortunes;
 
       using (var conn = SqliteContext.GetConnection())
       {
         conn.Open();
         fortunes = conn.Query<Fortune>(@"SELECT * FROM Fortune").ToList();
+        conn.Close();
       }
 
       fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
@@ -259,7 +253,6 @@ namespace httplistener
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
 
       var content =  header + body + footer;
-      CACHED = content;
       return response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
 
     }
@@ -289,7 +282,7 @@ namespace httplistener
   public static class SqliteContext
   {
 
-    public static SQLiteConnection conn;
+    public static SQLiteConnection conn = new SQLiteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=100");
 
     public static string datasource;
     #if __MonoCS__
@@ -300,15 +293,6 @@ namespace httplistener
     #else 
     public static SQLiteConnection GetConnection()
     {
-      if (conn != null)
-      {
-        return conn;
-      }
-      else
-      {
-        conn = new SQLiteConnection("Data Source=" + datasource);
-      }
-
       return conn;
       
     }
