@@ -48,7 +48,7 @@ namespace httplistener
       }
     }
 
-    static async Task Serve(TcpClient client)
+    static void Serve(TcpClient client)
     {
 
       byte del = (byte)'\r';
@@ -59,7 +59,7 @@ namespace httplistener
       using (var rw = client.GetStream())
       {
 
-        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
+        while (hlen == -1 && (read = rw.Read(header, 0, 1024)) > 0)
         {
           for (var i = 0; i < read; i++)
           {
@@ -79,22 +79,22 @@ namespace httplistener
           switch (url[0])
           {
             case "/plaintext":
-              await Plaintext(writer).ConfigureAwait(false);
+              //await Plaintext(writer).ConfigureAwait(false);
               break;
             case "/json":
               Json(writer);
               break;
             case "/db":
-              await Db(writer).ConfigureAwait(false);
+              //await Db(writer).ConfigureAwait(false);
               break;
             case "/fortunes":
-              await Fortunes(writer).ConfigureAwait(false);
+              Fortunes(writer);
               break;
             case "/queries":
               Queries(writer, url);
               break;
             default:
-              await NotFound(writer).ConfigureAwait(false);
+              //await NotFound(writer).ConfigureAwait(false);
               break;
           }
         }
@@ -228,7 +228,7 @@ namespace httplistener
     }
 
     
-    private static async Task Fortunes(StreamWriter response)
+    private static void Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
 
@@ -248,7 +248,7 @@ namespace httplistener
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
 
       var content =  header + body + footer;
-      await response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
+      response.Write(string.Format(RESPONSE, content.Length, "text/html", content));
 
     }
 
