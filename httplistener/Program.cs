@@ -59,7 +59,6 @@ namespace httplistener
       using (var rw = client.GetStream())
       {
 
-
         while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
         {
           for (var i = 0; i < read; i++)
@@ -138,8 +137,7 @@ namespace httplistener
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
       response.Write(string.Format(RESPONSE, json.Length, "application/json", json));
-      response.Flush();
-
+      //response.Flush();
     }
 
     private static async Task Queries(StreamWriter response, string[] url)
