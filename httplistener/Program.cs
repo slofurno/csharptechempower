@@ -83,7 +83,7 @@ namespace httplistener
               await Plaintext(writer).ConfigureAwait(false);
               break;
             case "/json":
-              await Json(writer).ConfigureAwait(false);
+              Json(writer);
               break;
             case "/db":
               await Db(writer).ConfigureAwait(false);
@@ -133,7 +133,7 @@ namespace httplistener
 
     }
 
-    private static async Task Json(StreamWriter response)
+    private static void Json(StreamWriter response)
     {
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
