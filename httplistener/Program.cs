@@ -47,12 +47,12 @@ namespace httplistener
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
         TcpClient client = await server.AcceptTcpClientAsync();
-        Task.Run(() => Serve(client));
+        Serve(client);
 
       }
     }
 
-    static void Serve(TcpClient client)
+    static async Task Serve(TcpClient client)
     {
 
       byte del = (byte)'\r';
@@ -86,16 +86,16 @@ namespace httplistener
               //await Plaintext(writer).ConfigureAwait(false);
               break;
             case "/json":
-              Json(writer);
+              await Json(writer);
               break;
             case "/db":
               //await Db(writer).ConfigureAwait(false);
               break;
             case "/fortunes":
-              Fortunes(writer);
+              await Fortunes(writer);
               break;
             case "/queries":
-              Queries(writer, url);
+              await Queries(writer, url);
               break;
             default:
               //await NotFound(writer).ConfigureAwait(false);
@@ -136,15 +136,15 @@ namespace httplistener
 
     }
 
-    private static void Json(StreamWriter response)
+    private static Task Json(StreamWriter response)
     {
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
-      response.Write(string.Format(RESPONSE, json.Length, "application/json", json));
+      return response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
       //response.Flush();
     }
 
-    private static void Queries(StreamWriter response, string[] url)
+    private static Task Queries(StreamWriter response, string[] url)
     {
 
       string raw;
@@ -177,7 +177,7 @@ namespace httplistener
       }
 
       var json = JSON.Serialize<RandomNumber[]>(results);
-      response.Write(string.Format(RESPONSE, json.Length, "application/json", json));
+      return response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
 
     }
 
@@ -232,7 +232,7 @@ namespace httplistener
     }
 
     
-    private static void Fortunes(StreamWriter response)
+    private static Task Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
 
@@ -252,9 +252,10 @@ namespace httplistener
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
 
       var content =  header + body + footer;
-      response.Write(string.Format(RESPONSE, content.Length, "text/html", content));
+      return response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
 
     }
+
 
   }
 
