@@ -18,27 +18,11 @@ namespace httplistener
   class Program
   {
 
-    static byte[][] stack;
-    static int cur = 0;
-    static Dictionary<char, byte> lookup;
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
     static void Main(string[] args)
     {
 
-      var bytes = new char[256];
-      lookup = new Dictionary<char, byte>();
-
-      for (var i = 0; i < 256; i++)
-      {
-        lookup[(char)i] = (byte)i;
-      }
-
-        stack = new byte[16][];
-      for (int i = 0; i < 16; i++)
-      {
-        stack[i] = new byte[4096];
-      }
       Process Proc = Process.GetCurrentProcess();
       Proc.ProcessorAffinity = (IntPtr)3;
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
@@ -64,7 +48,7 @@ namespace httplistener
       }
     }
 
-    static async Task Serve(Stream  rw)
+    static async Task Serve(Stream rw)
     {
 
       byte del = (byte)'\r';
@@ -187,6 +171,7 @@ namespace httplistener
       var json = JSON.Serialize<RandomNumber[]>(results);
 
       await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
+      await response.FlushAsync();
 
     }
 
