@@ -36,13 +36,14 @@ namespace httplistener
       while (true)
       {
         var context = await listener.GetContextAsync().ConfigureAwait(false);
-        Task.Run(()=>Serve(context));
+        Serve(context);
 
       }
     }
 
     static async Task Serve(HttpListenerContext context)
     {
+      await Task.Yield();
       var request = context.Request;
       using (var response = context.Response)
       {
