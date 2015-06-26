@@ -24,6 +24,8 @@ namespace httplistener
 
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
+    static string CACHED = null;
+
     static void Main(string[] args)
     {
 
@@ -232,6 +234,13 @@ namespace httplistener
     
     private static Task Fortunes(StreamWriter response)
     {
+
+      if (CACHED != null)
+      {
+        return response.WriteAsync(string.Format(RESPONSE, CACHED.Length, "text/html", CACHED));
+
+      }
+
       List<Fortune> fortunes;
 
       using (var conn = SqliteContext.GetConnection())
@@ -250,6 +259,7 @@ namespace httplistener
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
 
       var content =  header + body + footer;
+      CACHED = content;
       return response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
 
     }
