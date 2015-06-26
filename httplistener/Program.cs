@@ -91,6 +91,7 @@ namespace httplistener
       string responseString = null;
       using (var writer = new StreamWriter(rw))
       {
+        writer.AutoFlush = true;
         switch (url[0])
         {
           case "/plaintext":
