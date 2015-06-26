@@ -289,6 +289,8 @@ namespace httplistener
   public static class SqliteContext
   {
 
+    public static SQLiteConnection conn;
+
     public static string datasource;
     #if __MonoCS__
     public static SqliteConnection GetConnection()
@@ -298,7 +300,17 @@ namespace httplistener
     #else 
     public static SQLiteConnection GetConnection()
     {
-      return new SQLiteConnection("Data Source=" + datasource);
+      if (conn != null)
+      {
+        return conn;
+      }
+      else
+      {
+        conn = new SQLiteConnection("Data Source=" + datasource);
+      }
+
+      return conn;
+      
     }
 
     #endif
