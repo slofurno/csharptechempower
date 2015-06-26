@@ -27,8 +27,6 @@ namespace httplistener
     static void Main(string[] args)
     {
 
-      Process Proc = Process.GetCurrentProcess();
-      Proc.ProcessorAffinity = (IntPtr)3;
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
       SqliteContext.datasource = "fortunes.sqlite";
