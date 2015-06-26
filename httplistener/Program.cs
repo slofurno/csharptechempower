@@ -134,12 +134,16 @@ namespace httplistener
     {
       var body = "Not Found!";
       await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
+      await response.FlushAsync();
+
     }
 
     private static async Task Plaintext(StreamWriter response)
     {
       var body =  "Hello, World!";
       await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
+      await response.FlushAsync();
+
     }
 
     private static async Task Json(StreamWriter response)
@@ -147,6 +151,7 @@ namespace httplistener
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
       await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
+      await response.FlushAsync();
 
     }
 
