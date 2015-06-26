@@ -42,7 +42,7 @@ namespace httplistener
       while (true)
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
-        TcpClient client = await server.AcceptTcpClientAsync().ConfigureAwait(false);
+        TcpClient client = await server.AcceptTcpClientAsync();
         Serve(client);
 
       }
@@ -60,7 +60,7 @@ namespace httplistener
       {
 
 
-        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024).ConfigureAwait(false)) > 0)
+        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
         {
           for (var i = 0; i < read; i++)
           {
