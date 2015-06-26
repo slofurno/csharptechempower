@@ -91,7 +91,7 @@ namespace httplistener
               await Fortunes(writer).ConfigureAwait(false);
               break;
             case "/queries":
-              await Queries(writer, url).ConfigureAwait(false);
+              Queries(writer, url);
               break;
             default:
               await NotFound(writer).ConfigureAwait(false);
@@ -140,7 +140,7 @@ namespace httplistener
       //response.Flush();
     }
 
-    private static async Task Queries(StreamWriter response, string[] url)
+    private static void Queries(StreamWriter response, string[] url)
     {
 
       string raw;
@@ -172,11 +172,8 @@ namespace httplistener
         }
       }
 
-
       var json = JSON.Serialize<RandomNumber[]>(results);
-
-      await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
-      await response.FlushAsync();
+      response.Write(string.Format(RESPONSE, json.Length, "application/json", json));
 
     }
 
