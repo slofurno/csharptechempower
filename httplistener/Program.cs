@@ -59,6 +59,8 @@ namespace httplistener
 
       while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024))>0)
       {
+        Console.WriteLine("read: " + read);
+
         for (var i = 0; i < read; i++)
         {
           if (header[i] == del)
@@ -75,7 +77,6 @@ namespace httplistener
       string responseString = null;
       using (var writer = new StreamWriter(rw))
       {
-        writer.AutoFlush = true;
         switch (url[0])
         {
           case "/plaintext":
@@ -97,8 +98,9 @@ namespace httplistener
             await NotFound(writer);
             break;
         }
+        writer.Close();
       }
-      
+
 
     }
 
