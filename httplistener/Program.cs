@@ -235,13 +235,11 @@ namespace httplistener
     private static Task Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
-
-      using (var conn = SqliteContext.GetConnection())
-      {
-        conn.Open();
-        fortunes = conn.Query<Fortune>(@"SELECT * FROM Fortune").ToList();
-        conn.Close();
-      }
+      var conn = SqliteContext.GetConnection();
+     
+      fortunes = conn.Query<Fortune>(@"SELECT * FROM Fortune").ToList();
+        
+      
 
       fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
       fortunes.Sort();
@@ -283,10 +281,23 @@ namespace httplistener
   {
 
 #if __MonoCS__
-    public static SqliteConnection conn = new SqliteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=20");
+    public static SqliteConnection conn;
+
+     static SqliteContext()
+    {
+     conn = new SQLiteConnection("Data Source=fortunes.sqlite ;Version=3;Pooling=True;Max Pool Size=20");
+     conn.Open();
+    }
+
 #else
 
-    public static SQLiteConnection conn = new SQLiteConnection("Data Source=" + datasource + ";Version=3;Pooling=True;Max Pool Size=20");
+    public static SQLiteConnection conn;
+
+    static SqliteContext()
+    {
+     conn = new SQLiteConnection("Data Source=fortunes.sqlite ;Version=3;Pooling=True;Max Pool Size=20");
+     conn.Open();
+    }
 #endif
 
     public static string datasource;
