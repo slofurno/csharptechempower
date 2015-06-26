@@ -11,6 +11,7 @@ using Mono.Data.Sqlite;
 using Jil;
 using Dapper;
 using System.IO;
+using System.Net.Sockets;
 
 namespace httplistener
 {
@@ -20,6 +21,7 @@ namespace httplistener
     static byte[][] stack;
     static int cur = 0;
     static Dictionary<char, byte> lookup;
+    static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
     static void Main(string[] args)
     {
@@ -48,60 +50,70 @@ namespace httplistener
 
     static async Task Listen()
     {
-      var listener = new HttpListener();
-      listener.Prefixes.Add("http://*:8080/");
-      listener.Start();
+
+      var server = new TcpListener(IPAddress.Parse("127.0.0.1"),8080);
+      server.Start();
+
 
       while (true)
       {
-        var context = await listener.GetContextAsync().ConfigureAwait(false);
-        Serve(context);
+       // var context = await listener.GetContextAsync().ConfigureAwait(false);
+        var client = await server.AcceptTcpClientAsync();
+        Serve(client.GetStream());
 
       }
     }
 
-    static async Task Serve(HttpListenerContext context)
+    static async Task Serve(Stream  rw)
     {
-      var request = context.Request;
-      using (var response = context.Response)
+
+      byte del = (byte)'\r';
+      var header = new byte[1024];
+      int read;
+      int hlen = -1;
+
+
+      while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024))>0)
       {
-        string responseString = null;
-
-        switch (request.Url.LocalPath)
+        for (var i = 0; i < read; i++)
         {
-          case "/plaintext":
-            responseString = Plaintext(response);
+          if (header[i] == del)
+          {
+            hlen = i;
             break;
-          case "/json":
-            responseString = Json(response);
-            break;
-          case "/db":
-            responseString = Db(request, response);
-            break;
-          case "/fortunes":
-            responseString = Fortunes(request, response);
-            break;
-          case "/queries":
-            responseString = Queries(request, response);
-            break;
-          default:
-            responseString = NotFound(response);
-            break;
-        }
-
-        int n = ++cur & 15;
-              
-        response.ContentType = response.ContentType + "; charset=utf-8";
-        //System.Text.Encoding.UTF8.GetBytes(responseString,0, len,stack[n],4096);
-
-        var len = writeBinary(responseString, stack[n]);
-        response.ContentLength64 = len;
-        using (var output = response.OutputStream)
-        {
-          output.Write(stack[n], 0, len);//.ConfigureAwait(false);
-          output.Flush();
+          }
         }
       }
+
+      var get = Encoding.UTF8.GetString(header, 0, hlen);
+      var url = get.Split(' ')[1].Split('?');
+
+      string responseString = null;
+      using (var writer = new StreamWriter(rw))
+      {
+        switch (url[0])
+        {
+          case "/plaintext":
+            await Plaintext(writer);
+            break;
+          case "/json":
+            await Json(writer);
+            break;
+          case "/db":
+            await Db(writer);
+            break;
+          case "/fortunes":
+            await Fortunes(writer);
+            break;
+          case "/queries":
+            await Queries(writer, url[1]);
+            break;
+          default:
+            await NotFound(writer);
+            break;
+        }
+      }
+      
 
     }
 
@@ -115,31 +127,43 @@ namespace httplistener
       return len;
     }
 
-    
 
-    private static string NotFound(HttpListenerResponse response)
+
+    private static async Task NotFound(StreamWriter response)
     {
-      response.StatusCode = (int)HttpStatusCode.NotFound;
-      response.ContentType = "text/plain";
-      return "not found";
+      var body = "Not Found!";
+      await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
     }
 
-    private static string Plaintext(HttpListenerResponse response)
+    private static async Task Plaintext(StreamWriter response)
     {
-      response.ContentType = "text/plain";
-      return "Hello, World!";
+      var body =  "Hello, World!";
+      await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
     }
 
-    private static string Json(HttpListenerResponse response)
+    private static async Task Json(StreamWriter response)
     {
-      response.ContentType = "application/json";
-      return JSON.SerializeDynamic(new { message = "Hello, World!" });
+      var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
+
+      await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
 
     }
 
-    private static string Queries(HttpListenerRequest request, HttpListenerResponse response)
+    private static async Task Queries(StreamWriter response, string queryString)
     {
-      var count = GetQueries(request);
+
+      var qs = parseQuery(queryString);
+      string raw;
+      int count = 1;
+
+      if (qs.TryGetValue("queries", out raw))
+      {
+        if (int.TryParse(raw, out count))
+        {
+          count = Math.Min(500, count);
+        }
+      }
+
       var results = new RandomNumber[count];
 
       var rnd = new Random();
@@ -154,8 +178,24 @@ namespace httplistener
         }
       }
 
-      return JSON.Serialize<RandomNumber[]>(results);
+      var json = JSON.Serialize<RandomNumber[]>(results);
 
+      await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
+
+    }
+
+    static Dictionary<string, string> parseQuery(string qs)
+    {
+      var s = qs.Split('&');
+      var r = new Dictionary<string, string>();
+
+      foreach (var p in s)
+      {
+        var kvp = p.Split('=');
+        r[kvp[0]] = kvp[1];
+      }
+
+      return r;
     }
 
     public static int GetQueries(HttpListenerRequest request)
@@ -171,7 +211,7 @@ namespace httplistener
       return queries;
     }
 
-    private static string Db(HttpListenerRequest request, HttpListenerResponse response)
+    private static async Task Db(StreamWriter response)
     {
 
       var rnd = new Random();
@@ -182,12 +222,14 @@ namespace httplistener
 
         var result = conn.Query<RandomNumber>(@"SELECT * FROM World WHERE id=@id", new { id = id }).FirstOrDefault();
 
-        return JSON.Serialize<RandomNumber>(result);
+        var json = JSON.Serialize<RandomNumber>(result);
+
+        await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
       }
     }
 
     
-    private static string Fortunes(HttpListenerRequest request, HttpListenerResponse response)
+    private static async Task Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
 
@@ -200,15 +242,15 @@ namespace httplistener
       fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
       fortunes.Sort();
 
-      response.ContentType = "text/html";
-
       const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
 
       const string footer = "</table></body></html>";
 
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
 
-      return header + body + footer;
+      var content =  header + body + footer;
+      await response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
+
     }
 
   }
