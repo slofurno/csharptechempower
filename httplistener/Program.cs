@@ -35,7 +35,7 @@ namespace httplistener
     static async Task Listen()
     {
 
-      var server = new TcpListener(IPAddress.Parse("127.0.0.1"),8080);
+      var server = new TcpListener(IPAddress.Any,8080);
       server.Start();
 
 
@@ -95,7 +95,14 @@ namespace httplistener
               await Fortunes(writer);
               break;
             case "/queries":
-              await Queries(writer, url[1]);
+              if (url.Length > 0)
+              {
+                await Queries(writer, url[1]);
+              }
+              else
+              {
+                await Queries(writer, "");
+              }
               break;
             default:
               await NotFound(writer);
