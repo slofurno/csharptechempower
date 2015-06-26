@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 
-using System.Data.SQLite;
 using Mono.Data.Sqlite;
 
 using Jil;
@@ -198,9 +197,9 @@ namespace httplistener
   public static class SqliteContext
   {
     public static string datasource;
-    public static SQLiteConnection GetConnection()
+    public static SqliteConnection GetConnection()
     {
-      return new SQLiteConnection("Data Source=" + datasource);
+      return new SqliteConnection("Data Source=" + datasource);
     }
   
   }
