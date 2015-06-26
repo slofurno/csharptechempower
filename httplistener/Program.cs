@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 
+#if __MonoCS__
 using Mono.Data.Sqlite;
+#else
+using System.Data.SQLite;
+#endif
 
 using Jil;
 using Dapper;
@@ -275,12 +279,21 @@ namespace httplistener
 
   public static class SqliteContext
   {
+
     public static string datasource;
+    #if __MonoCS__
     public static SqliteConnection GetConnection()
     {
       return new SqliteConnection("Data Source=" + datasource);
     }
-  
+    #else 
+    public static SQLiteConnection GetConnection()
+    {
+      return new SQLiteConnection("Data Source=" + datasource);
+    }
+
+    #endif
+
   }
 
 }
