@@ -285,7 +285,7 @@ namespace httplistener
 
      static SqliteContext()
     {
-     conn = new SQLiteConnection("Data Source=fortunes.sqlite ;Version=3;Pooling=True;Max Pool Size=20");
+     conn = new SqliteConnection("Data Source=fortunes.sqlite ;Version=3;Pooling=True;Max Pool Size=20");
      conn.Open();
     }
 
