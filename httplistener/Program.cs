@@ -42,13 +42,13 @@ namespace httplistener
       while (true)
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
-        var client = await server.AcceptTcpClientAsync();
-        Serve(client.GetStream());
+        TcpClient client = await server.AcceptTcpClientAsync();
+        Serve(client);
 
       }
     }
 
-    static async Task Serve(Stream rw)
+    static async Task Serve(TcpClient client)
     {
 
       byte del = (byte)'\r';
@@ -56,49 +56,54 @@ namespace httplistener
       int read;
       int hlen = -1;
 
-
-      while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024))>0)
+      using (var rw = client.GetStream())
       {
-        Console.WriteLine("read: " + read);
 
-        for (var i = 0; i < read; i++)
+
+        while (hlen == -1 && (read = await rw.ReadAsync(header, 0, 1024)) > 0)
         {
-          if (header[i] == del)
+          Console.WriteLine("read: " + read);
+
+          for (var i = 0; i < read; i++)
           {
-            hlen = i;
-            break;
+            if (header[i] == del)
+            {
+              hlen = i;
+              break;
+            }
           }
         }
-      }
 
-      var get = Encoding.UTF8.GetString(header, 0, hlen);
-      var url = get.Split(' ')[1].Split('?');
+        var get = Encoding.UTF8.GetString(header, 0, hlen);
+        var url = get.Split(' ')[1].Split('?');
 
-      string responseString = null;
-      using (var writer = new StreamWriter(rw))
-      {
-        switch (url[0])
+        string responseString = null;
+        using (var writer = new StreamWriter(rw))
         {
-          case "/plaintext":
-            await Plaintext(writer);
-            break;
-          case "/json":
-            await Json(writer);
-            break;
-          case "/db":
-            await Db(writer);
-            break;
-          case "/fortunes":
-            await Fortunes(writer);
-            break;
-          case "/queries":
-            await Queries(writer, url[1]);
-            break;
-          default:
-            await NotFound(writer);
-            break;
+          switch (url[0])
+          {
+            case "/plaintext":
+              await Plaintext(writer);
+              break;
+            case "/json":
+              await Json(writer);
+              break;
+            case "/db":
+              await Db(writer);
+              break;
+            case "/fortunes":
+              await Fortunes(writer);
+              break;
+            case "/queries":
+              await Queries(writer, url[1]);
+              break;
+            default:
+              await NotFound(writer);
+              break;
+          }
+          writer.Close();
         }
-        writer.Close();
+
       }
 
 
