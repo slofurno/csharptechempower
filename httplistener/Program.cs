@@ -10,14 +10,33 @@ using Mono.Data.Sqlite;
 
 using Jil;
 using Dapper;
+using System.IO;
 
 namespace httplistener
 {
   class Program
   {
+
+    static byte[][] stack;
+    static int cur = 0;
+    static Dictionary<char, byte> lookup;
+
     static void Main(string[] args)
     {
 
+      var bytes = new char[256];
+      lookup = new Dictionary<char, byte>();
+
+      for (var i = 0; i < 256; i++)
+      {
+        lookup[(char)i] = (byte)i;
+      }
+
+        stack = new byte[16][];
+      for (int i = 0; i < 16; i++)
+      {
+        stack[i] = new byte[4096];
+      }
       Process Proc = Process.GetCurrentProcess();
       Proc.ProcessorAffinity = (IntPtr)3;
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
@@ -69,18 +88,34 @@ namespace httplistener
             responseString = NotFound(response);
             break;
         }
-   
+
+        int n = ++cur & 15;
+              
         response.ContentType = response.ContentType + "; charset=utf-8";
-        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-        response.ContentLength64 = buffer.Length;
+        //System.Text.Encoding.UTF8.GetBytes(responseString,0, len,stack[n],4096);
+
+        var len = writeBinary(responseString, stack[n]);
+        response.ContentLength64 = len;
         using (var output = response.OutputStream)
         {
-          output.Write(buffer, 0, buffer.Length);//.ConfigureAwait(false);
+          output.Write(stack[n], 0, len);//.ConfigureAwait(false);
           output.Flush();
         }
       }
 
     }
+
+    public static int writeBinary(string src, byte[] dst)
+    {
+      var len = src.Length;
+      for (int i = 0; i < len; i++)
+      {
+        dst[i] = (byte)src[i];
+      }
+      return len;
+    }
+
+    
 
     private static string NotFound(HttpListenerResponse response)
     {
@@ -177,6 +212,8 @@ namespace httplistener
     }
 
   }
+
+  
 
   public class RandomNumber
   {
