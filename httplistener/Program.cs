@@ -168,7 +168,10 @@ namespace httplistener
         }
       }
 
+
       var json = JSON.Serialize<RandomNumber[]>(results);
+      Console.WriteLine(json);
+
 
       await response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
       await response.FlushAsync();
