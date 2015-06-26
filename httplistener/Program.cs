@@ -73,14 +73,7 @@ namespace httplistener
         }
 
         var get = Encoding.UTF8.GetString(header, 0, hlen);
-        string queryString = null;
-
         var url = get.Split(' ')[1].Split('?');
-
-        if (url.Length > 1)
-        {
-          queryString = url[1];
-        }
 
         using (var writer = new StreamWriter(rw))
         {
@@ -99,13 +92,12 @@ namespace httplistener
               await Fortunes(writer);
               break;
             case "/queries":
-              await Queries(writer, parseQuery(queryString));
+              await Queries(writer, url);
               break;
             default:
               await NotFound(writer);
               break;
           }
-          writer.Close();
         }
 
       }
@@ -150,16 +142,21 @@ namespace httplistener
 
     }
 
-    private static async Task Queries(StreamWriter response, Dictionary<string,string> qs)
+    private static async Task Queries(StreamWriter response, string[] url)
     {
+
       string raw;
       int count = 1;
 
-      if (qs.TryGetValue("queries", out raw))
+      if (url.Length > 1)
       {
-        if (int.TryParse(raw, out count))
+        var qs = parseQuery(url[1]);
+        if (qs.TryGetValue("queries", out raw))
         {
-          count = Math.Min(500, count);
+          if (int.TryParse(raw, out count))
+          {
+            count = Math.Min(500, count);
+          }
         }
       }
 
