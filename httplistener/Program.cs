@@ -27,20 +27,19 @@ namespace httplistener
 
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
-    static ConcurrentQueue<TcpClient> queue;
+    static Stack<SocketAsyncEventArgs> availableConnections;
+    static byte[] socketBuffer;
+    static SliceManager sliceManager = new SliceManager(1024, 6000);
 
     static void Main(string[] args)
     {
 
       Init();
-      queue = new ConcurrentQueue<TcpClient>();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
-      Listen().Wait();
+      //Listen().Wait();
       
-
-      /*
       var qqq = ThreadPool.SetMinThreads(16, 4);
 
       var server = new ThreadStart(()=>{
@@ -49,24 +48,37 @@ namespace httplistener
 
         while (true)
         {
-          var client = listener.AcceptTcpClient();
-          Task.Run(() =>
+          var socket = listener.AcceptSocket();
+          SocketAsyncEventArgs connection;
+
+          lock (availableConnections)
           {
-            Serve(client);
-          });
+            connection = availableConnections.Pop();
+          }
+
+          if (connection == null)
+          {
+            Console.WriteLine("guess were out of connections?");
+          }
+
+          connection.UserToken = new UserSocket(socket);
+          if (!socket.ReceiveAsync(connection))
+          {
+            Task.Run(() =>
+            {
+              ProcessReceive(connection);
+            });
+          }
         }
       });
       var t = new Thread(server);
 
       t.Start();
       t.Join();
-       * */
+      
 
     }
 
-    static Stack<SocketAsyncEventArgs> availableConnections;
-    static byte[] socketBuffer;
-    static SliceManager sliceManager = new SliceManager(1024, 6000);
 
     static void Init()
     {
@@ -185,7 +197,11 @@ namespace httplistener
 
       e.SetBuffer(e.Offset, 1024);
       // Free the SocketAsyncEventArg so they can be reused by another client
-      availableConnections.Push(e);
+      lock (availableConnections)
+      {
+        availableConnections.Push(e);
+
+      }
     }
 
 
