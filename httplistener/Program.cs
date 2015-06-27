@@ -31,6 +31,8 @@ namespace httplistener
 
     static void Main(string[] args)
     {
+
+      Init();
       queue = new ConcurrentQueue<TcpClient>();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
@@ -62,79 +64,194 @@ namespace httplistener
 
     }
 
+    static Stack<SocketAsyncEventArgs> availableConnections;
+    static byte[] socketBuffer;
+    static SliceManager sliceManager = new SliceManager(8192, 1000);
+
+    static void Init()
+    {
+      availableConnections = new Stack<SocketAsyncEventArgs>();
+
+      for (int i = 0; i < 1000; i++)
+      {
+        var next = new SocketAsyncEventArgs();
+        next.Completed+= new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
+        next.UserToken=new UserSocket();
+        sliceManager.setBuffer(next);
+
+        availableConnections.Push(next);
+      }
+
+    }
+
+    static void SocketEventComplete(object sender, SocketAsyncEventArgs e)
+    {
+      switch (e.LastOperation)
+      {
+        case SocketAsyncOperation.Receive:
+          ProcessReceive(e);
+          break;
+        case SocketAsyncOperation.Send:
+          ProcessSend(e);
+          break;
+        default:
+          throw new ArgumentException("The last operation completed on the socket was not a receive or send");
+      }   
+    }
+
+    static void ProcessReceive(SocketAsyncEventArgs e)
+    {
+
+      int read = e.BytesTransferred;
+
+      UserSocket token = (UserSocket)e.UserToken;
+      if (read > 0 && e.SocketError == SocketError.Success)
+      {
+        var space = new int[2];
+        int s = 0;
+        const byte del = (byte)'\r';
+        const byte sep = (byte)' ';
+        var buffer = e.Buffer;
+        int offset = e.Offset;
+        
+        int hlen = -1;
+
+     
+        for (var i = 0; i < read; i++)
+        {
+          switch (buffer[offset + i])
+          {
+            case sep:
+              space[s] = offset + i;
+              s++;
+              break;
+            case del:
+              hlen = offset + i;
+              //zz
+              i = read;
+              break;
+          }
+      
+        }
+
+        var path = Encoding.UTF8.GetString(buffer, space[0] + 1, space[1] - space[0] - 1);
+
+        Serve(e, path);
+
+      }
+      else
+      {
+        CloseClientSocket(e);
+      }
+    }
+
+    static void ProcessSend(SocketAsyncEventArgs e)
+    {
+
+      CloseClientSocket(e);
+
+      /*
+      if (e.SocketError == SocketError.Success)
+      {
+        // done echoing data back to the client
+        UserSocket token = (UserSocket)e.UserToken;
+        // read the next block of data send from the client 
+        bool willRaiseEvent = token.Socket.ReceiveAsync(e);
+        if (!willRaiseEvent)
+        {
+          ProcessReceive(e);
+        }
+      }
+      else
+      {
+        CloseClientSocket(e);
+      }
+       * */
+    }
+
+
+    static void CloseClientSocket(SocketAsyncEventArgs e)
+    {
+      UserSocket token = e.UserToken as UserSocket;
+
+      // close the socket associated with the client 
+      try
+      {
+        token.Socket.Shutdown(SocketShutdown.Send);
+      }
+      // throws if client process has already closed 
+      catch (Exception) { }
+      token.Socket.Close();
+
+      // Free the SocketAsyncEventArg so they can be reused by another client
+      availableConnections.Push(e);
+    }
+
+
     static async Task Listen()
     {
 
       var server = new TcpListener(IPAddress.Any,8080);
       server.Start();
 
-
       while (true)
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
-     
-        TcpClient client = await server.AcceptTcpClientAsync();
-
-        Task.Run(()=>Serve(client));
+        var socket = await server.AcceptSocketAsync();
+        var args = availableConnections.Pop();
+        args.UserToken=new UserSocket(socket);
+        if (!socket.ReceiveAsync(args))
+        {
+          ProcessReceive(args);
+        }
 
       }
     }
 
-    static async Task Serve(TcpClient client)
+
+    static void Serve(SocketAsyncEventArgs e, string path)
     {
 
-      byte del = (byte)'\r';
-      var header = new byte[1024];
-      int read;
-      int hlen = -1;
+      String response;
 
-      using (var rw = client.GetStream())
+      switch (path)
       {
+        case "/plaintext":
+          response = "";
+          //await Plaintext(writer).ConfigureAwait(false);
+          break;
+        case "/json":
+          response = Json();
+          break;
+        case "/db":
+          response = "";
+          //await Db(writer).ConfigureAwait(false);
+          break;
+        case "/fortunes":
+          response = Fortunes();
+          break;
+        case "/queries":
+          response = Queries(path);
+          break;
+        default:
+          response = "";
+          //await NotFound(writer).ConfigureAwait(false);
+          break;
+      }
 
-        while (hlen == -1 && (read = rw.Read(header, 0, 1024)) > 0)
-        {
-          for (var i = 0; i < read; i++)
-          {
-            if (header[i] == del)
-            {
-              hlen = i;
-              break;
-            }
-          }
-        }
+      var token = (UserSocket)e.UserToken;
 
-        var get = Encoding.UTF8.GetString(header, 0, hlen);
-        var url = get.Split(' ')[1].Split('?');
+      Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, 0);
+      e.SetBuffer(0, response.Length);
 
-        using (var writer = new StreamWriter(rw))
-        {
-          switch (url[0])
-          {
-            case "/plaintext":
-              //await Plaintext(writer).ConfigureAwait(false);
-              break;
-            case "/json":
-              await Json(writer);
-              break;
-            case "/db":
-              //await Db(writer).ConfigureAwait(false);
-              break;
-            case "/fortunes":
-              Fortunes(writer);
-              break;
-            case "/queries":
-              await Queries(writer, url);
-              break;
-            default:
-              //await NotFound(writer).ConfigureAwait(false);
-              break;
-          }
-        }
-
+      if (!token.Socket.SendAsync(e))
+      {
+        ProcessSend(e);
       }
 
 
     }
+
 
     public static int writeBinary(string src, byte[] dst)
     {
@@ -164,16 +281,17 @@ namespace httplistener
 
     }
 
-    private static Task Json(StreamWriter response)
+    private static string Json()
     {
       var json = JSON.SerializeDynamic(new { message = "Hello, World!" });
 
-      return response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
+      return string.Format(RESPONSE, json.Length, "application/json", json);
       //response.Flush();
     }
 
-    private static Task Queries(StreamWriter response, string[] url)
+    private static string Queries(string path)
     {
+      string[] url = path.Split('?');
 
       string raw;
       int count = 1;
@@ -205,7 +323,7 @@ namespace httplistener
       }
 
       var json = JSON.Serialize<RandomNumber[]>(results);
-      return response.WriteAsync(string.Format(RESPONSE, json.Length, "application/json", json));
+      return string.Format(RESPONSE, json.Length, "application/json", json);
 
     }
 
@@ -260,7 +378,7 @@ namespace httplistener
     }
 
     
-    private static void Fortunes(StreamWriter response)
+    private static string Fortunes()
     {
       List<Fortune> fortunes;
       var conn = SqliteContext.GetConnection();
@@ -276,7 +394,8 @@ namespace httplistener
 
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
       var content = header + body + footer;
-      response.Write(string.Format(RESPONSE, content.Length, "text/html", content));
+
+      return string.Format(RESPONSE, content.Length, "text/html", content);
   
 
     }

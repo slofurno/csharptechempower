@@ -1,0 +1,26 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Net.Sockets;
+
+namespace httplistener
+{
+  class UserSocket
+  {
+    public Socket Socket { get; set; }
+
+    public UserSocket()
+    {
+
+    }
+
+    public UserSocket(Socket socket)
+    {
+      this.Socket = socket;
+    }
+
+
+  }
+}
