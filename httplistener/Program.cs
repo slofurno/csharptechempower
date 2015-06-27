@@ -209,7 +209,7 @@ namespace httplistener
       // Free the SocketAsyncEventArg so they can be reused by another client
       lock (availableConnections)
       {
-        availableConnections.Push(e);
+        //availableConnections.Push(e);
 
       }
     }
@@ -269,7 +269,7 @@ namespace httplistener
       var token = (UserSocket)e.UserToken;
 
       Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, 0);
-      e.SetBuffer(0, response.Length);
+      e.SetBuffer(e.Offset, response.Length);
 
       if (!token.Socket.SendAsync(e))
       {
