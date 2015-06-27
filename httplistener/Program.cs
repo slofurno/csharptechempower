@@ -34,8 +34,11 @@ namespace httplistener
       queue = new ConcurrentQueue<TcpClient>();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
-      SqliteContext.datasource = "fortunes.sqlite";
 
+      Listen().Wait();
+      
+
+      /*
       var qqq = ThreadPool.SetMinThreads(16, 4);
 
       var server = new ThreadStart(()=>{
@@ -55,6 +58,7 @@ namespace httplistener
 
       t.Start();
       t.Join();
+       * */
 
     }
 
@@ -68,7 +72,9 @@ namespace httplistener
       while (true)
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
+     
         TcpClient client = await server.AcceptTcpClientAsync();
+
         Task.Run(()=>Serve(client));
 
       }
