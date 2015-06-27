@@ -16,6 +16,9 @@ using Jil;
 using Dapper;
 using System.IO;
 using System.Net.Sockets;
+using System.Threading;
+
+using System.Collections.Concurrent;
 
 namespace httplistener
 {
@@ -24,15 +27,32 @@ namespace httplistener
 
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
-    static string CACHED = null;
+    static ConcurrentQueue<TcpClient> queue;
 
     static void Main(string[] args)
     {
-
+      queue = new ConcurrentQueue<TcpClient>();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
       SqliteContext.datasource = "fortunes.sqlite";
-      Listen().Wait();
+
+      var server = new ThreadStart(()=>{
+        var listener = new TcpListener(IPAddress.Any, 8080);
+        listener.Start();
+
+        while (true)
+        {
+          var client = listener.AcceptTcpClient();
+          Task.Run(() =>
+          {
+            Serve(client);
+          });
+        }
+      });
+      var t = new Thread(server);
+
+      t.Start();
+      t.Join();
 
     }
 
@@ -232,14 +252,12 @@ namespace httplistener
     }
 
     
-    private static Task Fortunes(StreamWriter response)
+    private static async Task Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
       var conn = SqliteContext.GetConnection();
-     
-      fortunes = conn.Query<Fortune>(@"SELECT * FROM Fortune").ToList();
-        
-      
+
+      fortunes = (await conn.QueryAsync<Fortune>(@"SELECT Id,Message FROM Fortune")).ToList();
 
       fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
       fortunes.Sort();
@@ -249,11 +267,12 @@ namespace httplistener
       const string footer = "</table></body></html>";
 
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
-
-      var content =  header + body + footer;
-      return response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
+      var content = header + body + footer;
+      await response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
+  
 
     }
+    
 
 
   }
@@ -291,12 +310,14 @@ namespace httplistener
 
 #else
 
-    public static SQLiteConnection conn;
+    private static SQLiteConnection conn;
+    private static SemaphoreSlim sem;
 
     static SqliteContext()
     {
-     conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=20");
-     conn.Open();
+      sem = new SemaphoreSlim(1);
+      conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
+      conn.Open();
     }
 #endif
 
@@ -309,7 +330,19 @@ namespace httplistener
 #else 
     public static SQLiteConnection GetConnection()
     {
+
       return conn;
+      /*
+      try
+      {
+        sem.Wait();
+        return conn;
+      }
+      finally
+      {
+        sem.Release();
+      }
+       * */
       
     }
 
