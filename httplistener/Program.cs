@@ -122,9 +122,10 @@ namespace httplistener
         var space = new int[2];
         int s = 0;
         const byte del = (byte)'\r';
-        const byte sep = (byte)' ';
+        const byte sep = (byte)0x20;
         var buffer = e.Buffer;
         int offset = e.Offset;
+        Console.WriteLine("offset: " + offset);
         
         int hlen = -1;
 
