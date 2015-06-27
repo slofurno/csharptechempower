@@ -29,7 +29,7 @@ namespace httplistener
 
     static Stack<SocketAsyncEventArgs> availableConnections;
     static byte[] socketBuffer;
-    static SliceManager sliceManager = new SliceManager(1024, 12000);
+    static SliceManager sliceManager = new SliceManager(4096, 12000);
 
     static void Main(string[] args)
     {
@@ -38,8 +38,8 @@ namespace httplistener
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
-      //Listen().Wait();
-      
+      Listen().Wait();
+      /*
       var qqq = ThreadPool.SetMinThreads(16, 4);
 
       var server = new ThreadStart(()=>{
@@ -75,7 +75,7 @@ namespace httplistener
 
       t.Start();
       t.Join();
-      
+      */
 
     }
 
@@ -204,7 +204,7 @@ namespace httplistener
       catch (Exception) { }
       token.Socket.Close();
 
-      e.SetBuffer(e.Offset, 1024);
+      e.SetBuffer(e.Offset, 4096);
       // Free the SocketAsyncEventArg so they can be reused by another client
       lock (availableConnections)
       {
@@ -224,11 +224,19 @@ namespace httplistener
       {
        // var context = await listener.GetContextAsync().ConfigureAwait(false);
         var socket = await server.AcceptSocketAsync();
-        var args = availableConnections.Pop();
-        args.UserToken=new UserSocket(socket);
-        if (!socket.ReceiveAsync(args))
+        SocketAsyncEventArgs connection;
+
+        lock (availableConnections)
         {
-          ProcessReceive(args);
+          connection = availableConnections.Pop();
+        }
+
+        connection.UserToken = new UserSocket(socket);
+        if (!socket.ReceiveAsync(connection))
+        {
+          Task.Run(()=>{
+            ProcessReceive(connection);
+          });
         }
 
       }
@@ -266,9 +274,10 @@ namespace httplistener
       }
 
       var token = (UserSocket)e.UserToken;
+      //Encoding.UTF8.get
 
-      Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, e.Offset);
-      e.SetBuffer(e.Offset, response.Length);
+      var len = Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, e.Offset);
+      e.SetBuffer(e.Offset, len);
 
       if (!token.Socket.SendAsync(e))
       {
@@ -420,8 +429,9 @@ namespace httplistener
 
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
       var content = header + body + footer;
+      var len = Encoding.UTF8.GetByteCount(content);
 
-      return string.Format(RESPONSE, content.Length, "text/html", content);
+      return string.Format(RESPONSE, len, "text/html", content);
   
 
     }
