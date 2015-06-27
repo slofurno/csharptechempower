@@ -125,7 +125,6 @@ namespace httplistener
         const byte sep = (byte)0x20;
         var buffer = e.Buffer;
         int offset = e.Offset;
-        Console.WriteLine("offset: " + offset);
         
         int hlen = -1;
 
