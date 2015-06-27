@@ -183,6 +183,7 @@ namespace httplistener
       catch (Exception) { }
       token.Socket.Close();
 
+      e.SetBuffer(e.Offset, 1024);
       // Free the SocketAsyncEventArg so they can be reused by another client
       availableConnections.Push(e);
     }
