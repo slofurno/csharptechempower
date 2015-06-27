@@ -29,7 +29,7 @@ namespace httplistener
 
     static Stack<SocketAsyncEventArgs> availableConnections;
     static byte[] socketBuffer;
-    static SliceManager sliceManager = new SliceManager(1024, 6000);
+    static SliceManager sliceManager = new SliceManager(1024, 12000);
 
     static void Main(string[] args)
     {
@@ -84,7 +84,7 @@ namespace httplistener
     {
       availableConnections = new Stack<SocketAsyncEventArgs>();
 
-      for (int i = 0; i < 6000; i++)
+      for (int i = 0; i < 12000; i++)
       {
         var next = new SocketAsyncEventArgs();
         next.Completed+= new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
@@ -267,7 +267,7 @@ namespace httplistener
 
       var token = (UserSocket)e.UserToken;
 
-      Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, 0);
+      Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, e.Offset);
       e.SetBuffer(e.Offset, response.Length);
 
       if (!token.Socket.SendAsync(e))
