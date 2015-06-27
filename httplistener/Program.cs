@@ -208,7 +208,7 @@ namespace httplistener
       // Free the SocketAsyncEventArg so they can be reused by another client
       lock (availableConnections)
       {
-        //availableConnections.Push(e);
+        availableConnections.Push(e);
 
       }
     }
