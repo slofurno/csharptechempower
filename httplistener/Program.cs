@@ -66,13 +66,13 @@ namespace httplistener
 
     static Stack<SocketAsyncEventArgs> availableConnections;
     static byte[] socketBuffer;
-    static SliceManager sliceManager = new SliceManager(8192, 1000);
+    static SliceManager sliceManager = new SliceManager(1024, 6000);
 
     static void Init()
     {
       availableConnections = new Stack<SocketAsyncEventArgs>();
 
-      for (int i = 0; i < 1000; i++)
+      for (int i = 0; i < 6000; i++)
       {
         var next = new SocketAsyncEventArgs();
         next.Completed+= new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
