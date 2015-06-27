@@ -112,7 +112,7 @@ namespace httplistener
               //await Db(writer).ConfigureAwait(false);
               break;
             case "/fortunes":
-              await Fortunes(writer);
+              Fortunes(writer);
               break;
             case "/queries":
               await Queries(writer, url);
@@ -252,12 +252,12 @@ namespace httplistener
     }
 
     
-    private static async Task Fortunes(StreamWriter response)
+    private static void Fortunes(StreamWriter response)
     {
       List<Fortune> fortunes;
       var conn = SqliteContext.GetConnection();
 
-      fortunes = (await conn.QueryAsync<Fortune>(@"SELECT Id,Message FROM Fortune")).ToList();
+      fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
       fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
       fortunes.Sort();
@@ -268,7 +268,7 @@ namespace httplistener
 
       var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
       var content = header + body + footer;
-      await response.WriteAsync(string.Format(RESPONSE, content.Length, "text/html", content));
+      response.Write(string.Format(RESPONSE, content.Length, "text/html", content));
   
 
     }
