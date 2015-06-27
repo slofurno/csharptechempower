@@ -36,6 +36,8 @@ namespace httplistener
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
       SqliteContext.datasource = "fortunes.sqlite";
 
+      var qqq = ThreadPool.SetMinThreads(16, 4);
+
       var server = new ThreadStart(()=>{
         var listener = new TcpListener(IPAddress.Any, 8080);
         listener.Start();
