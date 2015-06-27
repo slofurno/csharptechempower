@@ -146,9 +146,18 @@ namespace httplistener
       
         }
 
-        var path = Encoding.UTF8.GetString(buffer, space[0] + 1, space[1] - space[0] - 1);
+        var len = space[1] - space[0] - 1;
 
-        Serve(e, path);
+        if (len > 0)
+        {
+          var path = Encoding.UTF8.GetString(buffer, space[0] + 1, space[1] - space[0] - 1);
+          Serve(e, path);
+        }
+        else
+        {
+          Console.WriteLine("read " + read + " bytes...");
+          CloseClientSocket(e);
+        }
 
       }
       else
