@@ -399,23 +399,26 @@ namespace httplistener
     private static string Fortunes()
     {
       List<Fortune> fortunes;
-      var conn = SqliteContext.GetConnection();
+      using (var conn = SqliteContext.GetConnection())
+      {
+        conn.Open();
 
-      fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
+        fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
-      fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
-      fortunes.Sort();
+        fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
+        fortunes.Sort();
 
-      const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
+        const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
 
-      const string footer = "</table></body></html>";
+        const string footer = "</table></body></html>";
 
-      var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
-      var content = header + body + footer;
-      var len = Encoding.UTF8.GetByteCount(content);
+        var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
+        var content = header + body + footer;
+        var len = Encoding.UTF8.GetByteCount(content);
 
-      return string.Format(RESPONSE, len, "text/html", content);
+        return string.Format(RESPONSE, len, "text/html", content);
 
+      }
 
     }
 
@@ -450,20 +453,20 @@ namespace httplistener
 
      static SqliteContext()
     {
-     conn = new SqliteConnection("Data Source=fortunes.sqlite");
-     conn.Open();
+    // conn = new SqliteConnection("Data Source=fortunes.sqlite");
+    // conn.Open();
     }
 
 #else
 
     private static SQLiteConnection conn;
-    private static SemaphoreSlim sem;
+
 
     static SqliteContext()
     {
-      sem = new SemaphoreSlim(1);
-      conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
-      conn.Open();
+     // sem = new SemaphoreSlim(1);
+     // conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
+     // conn.Open();
     }
 #endif
 
@@ -471,13 +474,13 @@ namespace httplistener
 #if __MonoCS__
     public static SqliteConnection GetConnection()
     {
-      return conn;
+      return new SqliteConnection("Data Source=fortunes.sqlite");
     }
 #else
     public static SQLiteConnection GetConnection()
     {
 
-      return conn;
+      return new SQLiteConnection("Data Source=fortunes.sqlite");
       /*
       try
       {
