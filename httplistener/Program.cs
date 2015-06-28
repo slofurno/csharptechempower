@@ -33,6 +33,7 @@ namespace httplistener
 
     static void Main(string[] args)
     {
+      var dontquit = new AutoResetEvent(false);
 
       Init();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
@@ -40,8 +41,7 @@ namespace httplistener
       //var qqq = ThreadPool.SetMinThreads(1, 4);
 
       Listen();
-
-      Console.ReadLine();
+      dontquit.WaitOne();
 
     }
 
