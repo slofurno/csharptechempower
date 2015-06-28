@@ -37,48 +37,11 @@ namespace httplistener
       Init();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
-      var qqq = ThreadPool.SetMinThreads(16, 4);
+      //var qqq = ThreadPool.SetMinThreads(1, 4);
 
       Listen();
 
       Console.ReadLine();
-      /*
-      
-
-      var server = new ThreadStart(()=>{
-        var listener = new TcpListener(IPAddress.Any, 8080);
-        listener.Start();
-
-        while (true)
-        {
-          var socket = listener.AcceptSocket();
-          SocketAsyncEventArgs connection;
-
-          lock (availableConnections)
-          {
-            connection = availableConnections.Pop();
-          }
-
-          if (connection == null)
-          {
-            Console.WriteLine("guess were out of connections?");
-          }
-
-          connection.UserToken = new UserSocket(socket);
-          if (!socket.ReceiveAsync(connection))
-          {
-            Task.Run(() =>
-            {
-              ProcessReceive(connection);
-            });
-          }
-        }
-      });
-      var t = new Thread(server);
-
-      t.Start();
-      t.Join();
-      */
 
     }
 
@@ -92,8 +55,8 @@ namespace httplistener
       for (int i = 0; i < 12000; i++)
       {
         var next = new SocketAsyncEventArgs();
-        next.Completed+= new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
-        next.UserToken=new UserSocket();
+        next.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
+        next.UserToken = new UserSocket();
         sliceManager.setBuffer(next);
 
         availableConnections.Push(next);
@@ -103,7 +66,6 @@ namespace httplistener
       var endpoint = new IPEndPoint(IPAddress.Any, 8080);
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.Bind(endpoint);
-      // start the server with a listen backlog of 100 connections
       listenSocket.Listen(4000);
 
       acceptEventArg = new SocketAsyncEventArgs();
@@ -124,7 +86,7 @@ namespace httplistener
           break;
         default:
           throw new ArgumentException("The last operation completed on the socket was not a receive or send");
-      }   
+      }
     }
 
     static void ProcessReceive(SocketAsyncEventArgs e)
@@ -141,10 +103,10 @@ namespace httplistener
         const byte sep = (byte)0x20;
         var buffer = e.Buffer;
         int offset = e.Offset;
-        
+
         int hlen = -1;
 
-     
+
         for (var i = 0; i < read; i++)
         {
           switch (buffer[offset + i])
@@ -159,7 +121,7 @@ namespace httplistener
               i = read;
               break;
           }
-      
+
         }
 
         var len = space[1] - space[0] - 1;
@@ -331,7 +293,7 @@ namespace httplistener
 
     private static async Task Plaintext(StreamWriter response)
     {
-      var body =  "Hello, World!";
+      var body = "Hello, World!";
       await response.WriteAsync(string.Format(RESPONSE, body.Length, "text/plain", body));
       await response.FlushAsync();
 
@@ -433,7 +395,7 @@ namespace httplistener
       }
     }
 
-    
+
     private static string Fortunes()
     {
       List<Fortune> fortunes;
@@ -453,15 +415,15 @@ namespace httplistener
       var len = Encoding.UTF8.GetByteCount(content);
 
       return string.Format(RESPONSE, len, "text/html", content);
-  
+
 
     }
-    
+
 
 
   }
 
-  
+
 
   public class RandomNumber
   {
@@ -511,7 +473,7 @@ namespace httplistener
     {
       return conn;
     }
-#else 
+#else
     public static SQLiteConnection GetConnection()
     {
 
@@ -527,7 +489,7 @@ namespace httplistener
         sem.Release();
       }
        * */
-      
+
     }
 
 #endif
