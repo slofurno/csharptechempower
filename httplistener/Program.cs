@@ -450,7 +450,7 @@ namespace httplistener
 
      static SqliteContext()
     {
-     conn = new SqliteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=20");
+     conn = new SqliteConnection("Data Source=fortunes.sqlite");
      conn.Open();
     }
 
@@ -471,7 +471,7 @@ namespace httplistener
 #if __MonoCS__
     public static SqliteConnection GetConnection()
     {
-      return conn;
+      return new SqliteConnection("Data Source=fortunes.sqlite");
     }
 #else
     public static SQLiteConnection GetConnection()
