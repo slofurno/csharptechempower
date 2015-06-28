@@ -37,12 +37,13 @@ namespace httplistener
       Init();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
+      var qqq = ThreadPool.SetMinThreads(16, 4);
 
       Listen();
 
       Console.ReadLine();
       /*
-      var qqq = ThreadPool.SetMinThreads(16, 4);
+      
 
       var server = new ThreadStart(()=>{
         var listener = new TcpListener(IPAddress.Any, 8080);
