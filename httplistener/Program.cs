@@ -38,7 +38,9 @@ namespace httplistener
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
-      Listen().Wait();
+      Listen();
+
+      Console.ReadLine();
       /*
       var qqq = ThreadPool.SetMinThreads(16, 4);
 
@@ -79,6 +81,8 @@ namespace httplistener
 
     }
 
+    static Socket listenSocket;
+    static SocketAsyncEventArgs acceptEventArg;
 
     static void Init()
     {
@@ -93,6 +97,17 @@ namespace httplistener
 
         availableConnections.Push(next);
       }
+
+
+      var endpoint = new IPEndPoint(IPAddress.Any, 8080);
+      listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+      listenSocket.Bind(endpoint);
+      // start the server with a listen backlog of 100 connections
+      listenSocket.Listen(4000);
+
+      acceptEventArg = new SocketAsyncEventArgs();
+      acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessAccept);
+
 
     }
 
@@ -213,33 +228,38 @@ namespace httplistener
       }
     }
 
-
-    static async Task Listen()
+    static void ProcessAccept(Object sender, SocketAsyncEventArgs e)
     {
 
-      var server = new TcpListener(IPAddress.Any,8080);
-      server.Start();
+      SocketAsyncEventArgs connection;
 
-      while (true)
+      lock (availableConnections)
       {
-       // var context = await listener.GetContextAsync().ConfigureAwait(false);
-        var socket = await server.AcceptSocketAsync();
-        SocketAsyncEventArgs connection;
-
-        lock (availableConnections)
-        {
-          connection = availableConnections.Pop();
-        }
-
-        connection.UserToken = new UserSocket(socket);
-        if (!socket.ReceiveAsync(connection))
-        {
-          Task.Run(()=>{
-            ProcessReceive(connection);
-          });
-        }
-
+        connection = availableConnections.Pop();
       }
+
+      connection.UserToken = new UserSocket(e.AcceptSocket);
+      if (!e.AcceptSocket.ReceiveAsync(connection))
+      {
+        Task.Run(() =>
+        {
+          ProcessReceive(connection);
+        });
+      }
+
+      Listen();
+
+    }
+
+    static void Listen()
+    {
+      acceptEventArg.AcceptSocket = null;
+
+      if (!listenSocket.AcceptAsync(acceptEventArg))
+      {
+        ProcessAccept(null, acceptEventArg);
+      }
+
     }
 
 
