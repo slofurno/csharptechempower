@@ -471,7 +471,7 @@ namespace httplistener
 #if __MonoCS__
     public static SqliteConnection GetConnection()
     {
-      return new SqliteConnection("Data Source=fortunes.sqlite");
+      return conn;
     }
 #else
     public static SQLiteConnection GetConnection()
