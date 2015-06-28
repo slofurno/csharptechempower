@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 
+using Mono.Data.Sqlite;
+/*
 #if __MonoCS__
 using Mono.Data.Sqlite;
 #else
 using System.Data.SQLite;
 #endif
-
+*/
 using Jil;
 using Dapper;
 using System.IO;
@@ -448,6 +450,12 @@ namespace httplistener
   public static class SqliteContext
   {
 
+    public static SqliteConnection GetConnection()
+    {
+      return new SqliteConnection("Data Source=fortunes.sqlite");
+    }
+    /*
+
 #if __MonoCS__
     public static SqliteConnection conn;
 
@@ -460,8 +468,6 @@ namespace httplistener
 #else
 
     private static SQLiteConnection conn;
-
-
     static SqliteContext()
     {
      // sem = new SemaphoreSlim(1);
@@ -479,24 +485,12 @@ namespace httplistener
 #else
     public static SQLiteConnection GetConnection()
     {
-
       return new SQLiteConnection("Data Source=fortunes.sqlite");
-      /*
-      try
-      {
-        sem.Wait();
-        return conn;
-      }
-      finally
-      {
-        sem.Release();
-      }
-       * */
-
+      
     }
 
 #endif
-
+    */
   }
 
 }
