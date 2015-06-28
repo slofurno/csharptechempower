@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 
-using Mono.Data.Sqlite;
-/*
-#if __MonoCS__
+
+
+#if _LINUX_
 using Mono.Data.Sqlite;
 #else
 using System.Data.SQLite;
 #endif
-*/
+
 using Jil;
 using Dapper;
 using System.IO;
@@ -401,33 +401,25 @@ namespace httplistener
     private static string Fortunes()
     {
       List<Fortune> fortunes;
-      using (var conn = SqliteContext.GetConnection())
-      {
-        conn.Open();
+      var conn = SqliteContext.GetConnection();
 
-        fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
+      fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
-        fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
-        fortunes.Sort();
+      fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
+      fortunes.Sort();
 
-        const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
+      const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
 
-        const string footer = "</table></body></html>";
+      const string footer = "</table></body></html>";
 
-        var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
-        var content = header + body + footer;
-        var len = Encoding.UTF8.GetByteCount(content);
+      var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
+      var content = header + body + footer;
+      var len = Encoding.UTF8.GetByteCount(content);
 
-        return string.Format(RESPONSE, len, "text/html", content);
-
-      }
-
+      return string.Format(RESPONSE, len, "text/html", content);
     }
 
-
-
   }
-
 
 
   public class RandomNumber
@@ -450,19 +442,15 @@ namespace httplistener
   public static class SqliteContext
   {
 
-    public static SqliteConnection GetConnection()
-    {
-      return new SqliteConnection("Data Source=fortunes.sqlite");
-    }
-    /*
 
-#if __MonoCS__
+
+#if _LINUX_
     public static SqliteConnection conn;
 
      static SqliteContext()
     {
-    // conn = new SqliteConnection("Data Source=fortunes.sqlite");
-    // conn.Open();
+     conn = new SqliteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
+     conn.Open();
     }
 
 #else
@@ -471,26 +459,26 @@ namespace httplistener
     static SqliteContext()
     {
      // sem = new SemaphoreSlim(1);
-     // conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
-     // conn.Open();
+      conn = new SQLiteConnection("Data Source=fortunes.sqlite;Version=3;Pooling=True;Max Pool Size=10;");
+      conn.Open();
     }
 #endif
 
     public static string datasource;
-#if __MonoCS__
+#if _LINUX_
     public static SqliteConnection GetConnection()
     {
-      return new SqliteConnection("Data Source=fortunes.sqlite");
+      return conn;
     }
 #else
     public static SQLiteConnection GetConnection()
     {
-      return new SQLiteConnection("Data Source=fortunes.sqlite");
+      return conn;
       
     }
 
 #endif
-    */
+    
   }
 
 }
