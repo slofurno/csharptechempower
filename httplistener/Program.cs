@@ -320,7 +320,10 @@ namespace httplistener
         Console.WriteLine(ex.Message);
       }
 
-      token.Socket.Disconnect(true);
+      token.Socket.Disconnect(false);
+      token.Socket = null;
+      e.AcceptSocket = null;
+
       lock (listenConnections)
       {
         listenConnections.Push(e);
