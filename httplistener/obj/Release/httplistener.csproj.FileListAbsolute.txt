@@ -18,3 +18,4 @@ C:\dev\csharp\csharptechempower\httplistener\bin\Release\Sigil.xml
 C:\dev\csharp\csharptechempower\httplistener\bin\Release\System.Data.SQLite.xml
 C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.exe
 C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.pdb
+C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.csprojResolveAssemblyReference.cache

@@ -51,7 +51,6 @@ namespace httplistener
     }
 
     static Socket listenSocket;
-    static SocketAsyncEventArgs acceptEventArg;
 
     static void Init()
     {
@@ -84,19 +83,13 @@ namespace httplistener
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
- 
-      
+
+      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
 
       listenSocket.Bind(endpoint);
       listenSocket.Listen(4000);
 
-      acceptEventArg = new SocketAsyncEventArgs();
-
-      var listenBuffer = new byte[2048];
-      acceptEventArg.SetBuffer(listenBuffer, 0, 288);
-
-      acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
-
+   
 
     }
 
@@ -215,6 +208,7 @@ namespace httplistener
         }
         else
         {
+          Console.WriteLine("failed to parse header");
           CloseClientSocket(e);
         }
 
@@ -303,6 +297,9 @@ namespace httplistener
       {
         Console.WriteLine("failed to d/c");
       }
+      e.AcceptSocket.Close();
+      e.AcceptSocket = null;
+      
 
       lock (listenConnections)
       {
@@ -315,7 +312,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = true;
+      e.DisconnectReuseSocket = false;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
