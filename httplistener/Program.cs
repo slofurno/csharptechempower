@@ -188,7 +188,7 @@ namespace httplistener
       // throws if client process has already closed 
       catch (Exception) { }
       token.Socket.Close();
-
+      e.UserToken = null;
       e.SetBuffer(e.Offset, 4096);
       // Free the SocketAsyncEventArg so they can be reused by another client
       lock (availableConnections)
@@ -238,6 +238,10 @@ namespace httplistener
         if (!listenSocket.AcceptAsync(acceptEventArg))
         {
           ProcessAccept(null, acceptEventArg);
+        }
+        else
+        {
+          Console.WriteLine("deferred");
         }
       }
 
