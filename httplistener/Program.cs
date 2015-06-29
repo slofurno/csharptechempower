@@ -220,7 +220,12 @@ namespace httplistener
     {
       _listenNext.Set();
       ((UserSocket)e.UserToken).Socket = e.AcceptSocket;
-      ProcessReceive(e);
+
+      if (!e.AcceptSocket.ReceiveAsync(e))
+      {
+        ProcessReceive(e);
+      }
+
 
     }
 
