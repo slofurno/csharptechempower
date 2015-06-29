@@ -84,7 +84,6 @@ namespace httplistener
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
 
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
 
       listenSocket.Bind(endpoint);
       listenSocket.Listen(4000);
@@ -176,8 +175,6 @@ namespace httplistener
         }
 
       }
-
-      var temp = Encoding.UTF8.GetString(buffer, offset, read);
 
       var len = space[1] - space[0] - 1;
 
@@ -297,9 +294,6 @@ namespace httplistener
       {
         Console.WriteLine("failed to d/c");
       }
-      e.AcceptSocket.Close();
-      e.AcceptSocket = null;
-      
 
       lock (listenConnections)
       {
@@ -312,7 +306,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = false;
+      e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
