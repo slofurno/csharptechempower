@@ -33,7 +33,6 @@ namespace httplistener
     static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
-    static BlockingCollection<SocketAsyncEventArgs> _connections;
 
     static void Main(string[] args)
     {
@@ -43,15 +42,7 @@ namespace httplistener
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
       //var qqq = ThreadPool.SetMinThreads(1, 4);
-      Task.Run(() =>
-      {
-        while (true)
-        {
-          var next = _connections.Take();
-          ProcessReceive(next);
-        }
 
-      });
       Listen();
       dontquit.WaitOne();
 
@@ -86,9 +77,6 @@ namespace httplistener
       acceptEventArg = new SocketAsyncEventArgs();
       acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessAccept);
 
-      _connections = new BlockingCollection<SocketAsyncEventArgs>();
-      
-
 
     }
 
@@ -97,10 +85,7 @@ namespace httplistener
       switch (e.LastOperation)
       {
         case SocketAsyncOperation.Receive:
-
-          _connections.Add(e);
-
-          //ProcessReceive(e);
+          ProcessReceive(e);
           break;
         case SocketAsyncOperation.Send:
           ProcessSend(e);
@@ -149,7 +134,7 @@ namespace httplistener
 
         if (len > 0)
         {
-          var path = Encoding.UTF8.GetString(buffer, space[0] + 1, space[1] - space[0] - 1);
+          var path = Encoding.UTF8.GetString(buffer, space[0] + 1, len);
 
           Serve(e, path);
         }
@@ -168,26 +153,7 @@ namespace httplistener
 
     static void ProcessSend(SocketAsyncEventArgs e)
     {
-
-      CloseClientSocket(e);
-
-      /*
-      if (e.SocketError == SocketError.Success)
-      {
-        // done echoing data back to the client
-        UserSocket token = (UserSocket)e.UserToken;
-        // read the next block of data send from the client 
-        bool willRaiseEvent = token.Socket.ReceiveAsync(e);
-        if (!willRaiseEvent)
-        {
-          ProcessReceive(e);
-        }
-      }
-      else
-      {
-        CloseClientSocket(e);
-      }
-       * */
+            CloseClientSocket(e);
     }
 
 
@@ -203,6 +169,7 @@ namespace httplistener
       // throws if client process has already closed 
       catch (Exception) { }
       token.Socket.Close();
+
       e.UserToken = null;
       e.SetBuffer(e.Offset, 4096);
       // Free the SocketAsyncEventArg so they can be reused by another client
@@ -216,51 +183,39 @@ namespace httplistener
 
     static void ProcessAccept(Object sender, SocketAsyncEventArgs e)
     {
-
       SocketAsyncEventArgs connection;
       Socket socket = e.AcceptSocket;
-      _listenNext.Set();
 
       lock (availableConnections)
       {
         connection = availableConnections.Pop();
         _currentOpenSockets++;
+        Console.WriteLine("open: " + _currentOpenSockets);
       }
 
       connection.UserToken = new UserSocket(socket);
       if (!socket.ReceiveAsync(connection))
       {
-
-        _connections.Add(connection);
-
-        /*
         Task.Run(() =>
         {
           ProcessReceive(connection);
         });
-         * */
       }
+
+      Listen();
 
     }
 
     static void Listen()
     {
+     
+      acceptEventArg.AcceptSocket = null;
 
-      while (true)
+      if (!listenSocket.AcceptAsync(acceptEventArg))
       {
-        _listenNext.WaitOne();
-        acceptEventArg.AcceptSocket = null;
-
-        if (!listenSocket.AcceptAsync(acceptEventArg))
-        {
-          ProcessAccept(null, acceptEventArg);
-        }
-        else
-        {
-          Console.WriteLine("deferred");
-        }
+        ProcessAccept(null, acceptEventArg);
       }
-
+    
     }
 
 
