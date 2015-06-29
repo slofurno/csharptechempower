@@ -263,7 +263,8 @@ namespace httplistener
       // throws if client process has already closed 
       catch (Exception) { }
 
-      token.Socket.Disconnect(true);
+      token.Socket.Disconnect(false);
+      e.AcceptSocket = null;
       e.SetBuffer(0, 4096);
       
 
