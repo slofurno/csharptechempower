@@ -32,6 +32,8 @@ namespace httplistener
     static Stack<SocketAsyncEventArgs> availableConnections;
     static byte[] socketBuffer;
     static SliceManager sliceManager = new SliceManager(4096, 12000);
+    static AutoResetEvent _listenNext = new AutoResetEvent(true);
+    static int _currentOpenSockets = 0;
 
     static void Main(string[] args)
     {
@@ -189,6 +191,7 @@ namespace httplistener
       lock (availableConnections)
       {
         availableConnections.Push(e);
+        _currentOpenSockets--;
 
       }
     }
@@ -197,14 +200,17 @@ namespace httplistener
     {
 
       SocketAsyncEventArgs connection;
+      Socket socket = e.AcceptSocket;
+      _listenNext.Set();
 
       lock (availableConnections)
       {
         connection = availableConnections.Pop();
+        _currentOpenSockets++;
       }
 
-      connection.UserToken = new UserSocket(e.AcceptSocket);
-      if (!e.AcceptSocket.ReceiveAsync(connection))
+      connection.UserToken = new UserSocket(socket);
+      if (!socket.ReceiveAsync(connection))
       {
         Task.Run(() =>
         {
@@ -212,17 +218,20 @@ namespace httplistener
         });
       }
 
-      Listen();
-
     }
 
     static void Listen()
     {
-      acceptEventArg.AcceptSocket = null;
 
-      if (!listenSocket.AcceptAsync(acceptEventArg))
+      while (true)
       {
-        ProcessAccept(null, acceptEventArg);
+        _listenNext.WaitOne();
+        acceptEventArg.AcceptSocket = null;
+
+        if (!listenSocket.AcceptAsync(acceptEventArg))
+        {
+          ProcessAccept(null, acceptEventArg);
+        }
       }
 
     }
