@@ -310,7 +310,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = true;
+      //e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
@@ -322,7 +322,7 @@ namespace httplistener
       catch (Exception) { }
 
       token.Socket = null;
-      e.AcceptSocket.Close();
+      e.AcceptSocket.Close(4);
       e.AcceptSocket = null;
 
       lock (listenConnections)
