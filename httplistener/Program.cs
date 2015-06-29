@@ -214,6 +214,7 @@ namespace httplistener
       }
       else
       {
+        Console.WriteLine("closing early");
         CloseClientSocket(e);
 
       }
