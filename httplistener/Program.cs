@@ -88,7 +88,7 @@ namespace httplistener
       listenSocket.LingerState = new LingerOption(true, 0);
 
       listenSocket.Bind(endpoint);
-      listenSocket.Listen(4000);
+      listenSocket.Listen(8000);
 
    
 
@@ -332,13 +332,15 @@ namespace httplistener
         _currentOpenSockets--;
       }
       */
-      
-  
+
+      e.AcceptSocket.Disconnect(true);
+
+  /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-      
+      */
             
     }
 
