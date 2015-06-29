@@ -59,7 +59,7 @@ namespace httplistener
       availableConnections = new Stack<SocketAsyncEventArgs>();
       listenConnections = new Stack<SocketAsyncEventArgs>();
 
-      for (int i = 0; i < 32; i++)
+      for (int i = 0; i < 128; i++)
       {
         var next = new SocketAsyncEventArgs();
         next.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
