@@ -191,6 +191,7 @@ namespace httplistener
       {
         var path = Encoding.UTF8.GetString(buffer, space[0] + 1, len);
         token.Path = path;
+        e.SetBuffer(0, 4096);
         return true;
 
       }
@@ -227,6 +228,11 @@ namespace httplistener
 
     static void ProcessSend(SocketAsyncEventArgs e)
     {
+      UserSocket token = (UserSocket)e.UserToken;
+      if (e.BytesTransferred != token.Read)
+      {
+        Console.WriteLine("only wrote " + e.BytesTransferred + " out of " + token.Read);
+      }
       CloseClientSocket(e);
     }
 
@@ -306,6 +312,7 @@ namespace httplistener
       UserSocket token = e.UserToken as UserSocket;
       e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
+      token.Socket = null;
       // close the socket associated with the client 
       try
       {
@@ -365,6 +372,7 @@ namespace httplistener
 
       var len = Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, e.Offset);
       e.SetBuffer(e.Offset, len);
+      token.Read = len;
 
       if (!token.Socket.SendAsync(e))
       {
