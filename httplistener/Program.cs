@@ -84,8 +84,6 @@ namespace httplistener
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
       
 
       listenSocket.Bind(endpoint);
@@ -152,54 +150,69 @@ namespace httplistener
       }
     }
 
+    static bool TryParseRequest(SocketAsyncEventArgs e)
+    {
+      
+      UserSocket token = (UserSocket)e.UserToken;
+      var read = token.Read;
+
+      var space = new int[2];
+      int s = 0;
+      const byte del = (byte)'\r';
+      const byte sep = (byte)0x20;
+      var buffer = e.Buffer;
+      int offset = 0;
+
+      int hlen = -1;
+
+
+      for (var i = 0; i < read; i++)
+      {
+        switch (buffer[offset + i])
+        {
+          case sep:
+            space[s] = offset + i;
+            s++;
+            break;
+          case del:
+            hlen = offset + i;
+            //zz
+            i = read;
+            break;
+        }
+
+      }
+
+      var temp = Encoding.UTF8.GetString(buffer, offset, read);
+
+      var len = space[1] - space[0] - 1;
+
+      if (len > 0)
+      {
+        var path = Encoding.UTF8.GetString(buffer, space[0] + 1, len);
+        token.Path = path;
+        return true;
+
+      }
+
+      return false;
+    }
+
     static void ProcessReceive(SocketAsyncEventArgs e)
     {
 
       int read = e.BytesTransferred;
+      UserSocket token = (UserSocket)e.UserToken;
 
-      //UserSocket token = (UserSocket)e.UserToken;
+      token.Read += read;
       if (read > 0 && e.SocketError == SocketError.Success)
       {
-        var space = new int[2];
-        int s = 0;
-        const byte del = (byte)'\r';
-        const byte sep = (byte)0x20;
-        var buffer = e.Buffer;
-        int offset = e.Offset;
-
-        int hlen = -1;
-
-
-        for (var i = 0; i < read; i++)
+        if (TryParseRequest(e))
         {
-          switch (buffer[offset + i])
-          {
-            case sep:
-              space[s] = offset + i;
-              s++;
-              break;
-            case del:
-              hlen = offset + i;
-              //zz
-              i = read;
-              break;
-          }
-
-        }
-
-        var temp = Encoding.UTF8.GetString(buffer, e.Offset, read);
-
-        var len = space[1] - space[0] - 1;
-
-        if (len > 0)
-        {
-          var path = Encoding.UTF8.GetString(buffer, space[0] + 1, len);
-
-          Serve(e, path);
+          Serve(e);
         }
         else
         {
-          Console.WriteLine("read " + read + " bytes...");
           CloseClientSocket(e);
         }
 
@@ -207,7 +220,9 @@ namespace httplistener
       else
       {
         CloseClientSocket(e);
+
       }
+
     }
 
     static void ProcessSend(SocketAsyncEventArgs e)
@@ -218,12 +233,25 @@ namespace httplistener
     static void ProcessAccept(SocketAsyncEventArgs e)
     {
       _listenNext.Set();
-      ((UserSocket)e.UserToken).Socket = e.AcceptSocket;
 
-      if (!e.AcceptSocket.ReceiveAsync(e))
+      UserSocket token = (UserSocket)e.UserToken;
+      var read = e.BytesTransferred;
+      token.Socket = e.AcceptSocket;
+      token.Read = read;
+      e.SetBuffer(read, 4096 - read);
+
+      if (read > 0 && TryParseRequest(e))
+      {
+        Serve(e);
+      }
+      else if (!e.AcceptSocket.ReceiveAsync(e))
       {
         ProcessReceive(e);
       }
+    
+
+
+      
 
 
     }
@@ -301,9 +329,10 @@ namespace httplistener
     }
 
 
-    static void Serve(SocketAsyncEventArgs e, string path)
+    static void Serve(SocketAsyncEventArgs e)
     {
-
+      UserSocket token = (UserSocket)e.UserToken;
+      var path = token.Path;
       String response;
 
       switch (path)
@@ -331,7 +360,7 @@ namespace httplistener
           break;
       }
 
-      var token = (UserSocket)e.UserToken;
+     
       //Encoding.UTF8.get
 
       var len = Encoding.UTF8.GetBytes(response, 0, response.Length, e.Buffer, e.Offset);

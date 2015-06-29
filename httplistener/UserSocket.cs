@@ -10,6 +10,8 @@ namespace httplistener
   class UserSocket
   {
     public Socket Socket { get; set; }
+    public int Read { get; set; }
+    public string Path { get; set; }
 
     public UserSocket()
     {
