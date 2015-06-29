@@ -30,12 +30,11 @@ namespace httplistener
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
     static Stack<SocketAsyncEventArgs> listenConnections;
-    static Stack<SocketAsyncEventArgs> availableConnections;
-    static SliceManager sliceManager = new SliceManager(4096, 12000);
+    //static Stack<SocketAsyncEventArgs> availableConnections;
+    //static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
     static int _maxSockets = 0;
-    static SliceArgs hmm;
 
     static void Main(string[] args)
     {
@@ -56,7 +55,7 @@ namespace httplistener
 
     static void Init()
     {
-      availableConnections = new Stack<SocketAsyncEventArgs>();
+      //availableConnections = new Stack<SocketAsyncEventArgs>();
       listenConnections = new Stack<SocketAsyncEventArgs>();
 
       for (int i = 0; i < 128; i++)
@@ -69,7 +68,7 @@ namespace httplistener
 
         listenConnections.Push(next);
       }
-
+      /*
       for (int i = 0; i < 12000; i++)
       {
         var next = new SocketAsyncEventArgs();
@@ -79,7 +78,7 @@ namespace httplistener
 
         availableConnections.Push(next);
       }
-
+      */
 
       var endpoint = new IPEndPoint(IPAddress.Any, 8080);
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -92,13 +91,6 @@ namespace httplistener
       acceptEventArg = new SocketAsyncEventArgs();
 
       var listenBuffer = new byte[2048];
-
-      hmm = new SliceArgs();
-      hmm.SetBuffer(listenBuffer, 0, 2048);
-      hmm.BlockOffset = 0;
-
-      hmm.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
-
       acceptEventArg.SetBuffer(listenBuffer, 0, 288);
 
       acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
@@ -111,12 +103,18 @@ namespace httplistener
       while (true)
       {
         SocketAsyncEventArgs args;
+
+        _listenNext.WaitOne();
+
         lock (listenConnections)
         {
           args = listenConnections.Pop();
+          _currentOpenSockets++;
+          if (_currentOpenSockets > _maxSockets)
+          {
+            _maxSockets = _currentOpenSockets;
+          }
         }
-
-        _listenNext.WaitOne();
 
         if (!listenSocket.AcceptAsync(args))
         {
@@ -219,6 +217,7 @@ namespace httplistener
 
     }
 
+    /*
     static void ProcessAccept2(Object sender, SocketAsyncEventArgs e)
     {
       SocketAsyncEventArgs connection;
@@ -250,6 +249,7 @@ namespace httplistener
       Listen();
 
     }
+    */
 
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
@@ -276,6 +276,7 @@ namespace httplistener
       lock (listenConnections)
       {
         listenConnections.Push(e);
+        _currentOpenSockets--;
 
       }
     }
