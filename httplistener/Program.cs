@@ -240,7 +240,7 @@ namespace httplistener
           response = Json();
           break;
         case "/db":
-          response = "open: " + _currentOpenSockets;
+          response = "open: " + _maxSockets;
           //await Db(writer).ConfigureAwait(false);
           break;
         case "/fortunes":
