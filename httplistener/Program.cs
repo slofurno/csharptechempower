@@ -29,11 +29,13 @@ namespace httplistener
 
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
+    static Stack<SocketAsyncEventArgs> listenConnections;
     static Stack<SocketAsyncEventArgs> availableConnections;
     static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
     static int _maxSockets = 0;
+    static SliceArgs hmm;
 
     static void Main(string[] args)
     {
@@ -55,6 +57,18 @@ namespace httplistener
     static void Init()
     {
       availableConnections = new Stack<SocketAsyncEventArgs>();
+      listenConnections = new Stack<SocketAsyncEventArgs>();
+
+      for (int i = 0; i < 32; i++)
+      {
+        var next = new SocketAsyncEventArgs();
+        next.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
+        next.UserToken = new UserSocket();
+        var buffer = new byte[4096];
+        next.SetBuffer(buffer, 0, 4096);
+
+        listenConnections.Push(next);
+      }
 
       for (int i = 0; i < 12000; i++)
       {
@@ -76,8 +90,43 @@ namespace httplistener
       listenSocket.Listen(4000);
 
       acceptEventArg = new SocketAsyncEventArgs();
-      acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessAccept);
 
+      var listenBuffer = new byte[2048];
+
+      hmm = new SliceArgs();
+      hmm.SetBuffer(listenBuffer, 0, 2048);
+      hmm.BlockOffset = 0;
+
+      hmm.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
+
+      acceptEventArg.SetBuffer(listenBuffer, 0, 288);
+
+      acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
+
+
+    }
+
+    static void Listen()
+    {
+      while (true)
+      {
+        SocketAsyncEventArgs args;
+        lock (listenConnections)
+        {
+          args = listenConnections.Pop();
+        }
+
+        _listenNext.WaitOne();
+
+        if (!listenSocket.AcceptAsync(args))
+        {
+          Task.Run(() =>
+          {
+            ProcessAccept(args);
+          });
+        }
+      }
+ 
 
     }
 
@@ -91,6 +140,9 @@ namespace httplistener
         case SocketAsyncOperation.Send:
           ProcessSend(e);
           break;
+        case SocketAsyncOperation.Accept:
+          ProcessAccept(e);
+          break;
         default:
           throw new ArgumentException("The last operation completed on the socket was not a receive or send");
       }
@@ -101,7 +153,7 @@ namespace httplistener
 
       int read = e.BytesTransferred;
 
-      UserSocket token = (UserSocket)e.UserToken;
+      //UserSocket token = (UserSocket)e.UserToken;
       if (read > 0 && e.SocketError == SocketError.Success)
       {
         var space = new int[2];
@@ -131,6 +183,8 @@ namespace httplistener
 
         }
 
+        var temp = Encoding.UTF8.GetString(buffer, e.Offset, read);
+
         var len = space[1] - space[0] - 1;
 
         if (len > 0)
@@ -157,35 +211,20 @@ namespace httplistener
             CloseClientSocket(e);
     }
 
-
-    static void CloseClientSocket(SocketAsyncEventArgs e)
+    static void ProcessAccept(SocketAsyncEventArgs e)
     {
-      UserSocket token = e.UserToken as UserSocket;
+      _listenNext.Set();
+      ((UserSocket)e.UserToken).Socket = e.AcceptSocket;
+      ProcessReceive(e);
 
-      // close the socket associated with the client 
-      try
-      {
-        token.Socket.Shutdown(SocketShutdown.Send);
-      }
-      // throws if client process has already closed 
-      catch (Exception) { }
-      token.Socket.Close();
-
-      e.UserToken = null;
-      e.SetBuffer(e.Offset, 4096);
-      // Free the SocketAsyncEventArg so they can be reused by another client
-      lock (availableConnections)
-      {
-        availableConnections.Push(e);
-        _currentOpenSockets--;
-
-      }
     }
 
-    static void ProcessAccept(Object sender, SocketAsyncEventArgs e)
+    static void ProcessAccept2(Object sender, SocketAsyncEventArgs e)
     {
       SocketAsyncEventArgs connection;
       Socket socket = e.AcceptSocket;
+
+      var rec = Encoding.UTF8.GetString(e.Buffer, 0, e.BytesTransferred);
 
       lock (availableConnections)
       {
@@ -212,16 +251,33 @@ namespace httplistener
 
     }
 
-    static void Listen()
+    static void CloseClientSocket(SocketAsyncEventArgs e)
     {
-     
-      acceptEventArg.AcceptSocket = null;
+      UserSocket token = e.UserToken as UserSocket;
 
-      if (!listenSocket.AcceptAsync(acceptEventArg))
+      // close the socket associated with the client 
+      try
       {
-        ProcessAccept(null, acceptEventArg);
+        token.Socket.Shutdown(SocketShutdown.Both);
       }
-    
+      // throws if client process has already closed 
+      catch (Exception) { }
+
+      token.Socket.Disconnect(true);
+      e.SetBuffer(0, 4096);
+
+      /*
+      token.Socket.Close();
+      e.UserToken = null;
+      e.SetBuffer(e.Offset, 4096);
+      */
+
+ 
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+
+      }
     }
 
 
@@ -476,6 +532,12 @@ namespace httplistener
 
 #endif
     
+  }
+
+  class SliceArgs : SocketAsyncEventArgs
+  {
+    public int BlockOffset { get; set; }
+
   }
 
 }
