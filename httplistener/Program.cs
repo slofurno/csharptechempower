@@ -82,12 +82,13 @@ namespace httplistener
 
       var endpoint = new IPEndPoint(IPAddress.Any, 8080);
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+ 
       
 
       listenSocket.Bind(endpoint);
-      listenSocket.Listen(8000);
+      listenSocket.Listen(4000);
 
       acceptEventArg = new SocketAsyncEventArgs();
 
@@ -318,6 +319,8 @@ namespace httplistener
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
+
+      /*
       try
       {
         token.Socket.Shutdown(SocketShutdown.Send);
@@ -326,6 +329,8 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
+      */
+
 
       //token.Socket = null;
       //e.AcceptSocket.Close(4);
