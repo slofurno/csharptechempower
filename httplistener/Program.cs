@@ -322,7 +322,8 @@ namespace httplistener
       catch (Exception) { }
 
       token.Socket = null;
-      e.AcceptSocket.Disconnect(true);
+      e.AcceptSocket.Close();
+      e.AcceptSocket = null;
 
       lock (listenConnections)
       {
