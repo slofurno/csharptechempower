@@ -298,6 +298,10 @@ namespace httplistener
 
     static void ProcessDisconnect(SocketAsyncEventArgs e)
     {
+      if (e.SocketError != SocketError.Success)
+      {
+        Console.WriteLine("failed to d/c");
+      }
 
       lock (listenConnections)
       {
@@ -319,7 +323,9 @@ namespace httplistener
         token.Socket.Shutdown(SocketShutdown.Send);
       }
       // throws if client process has already closed 
-      catch (Exception) { }
+      catch (Exception ex) {
+        Console.WriteLine(ex.Message);
+      }
 
       //token.Socket = null;
       //e.AcceptSocket.Close(4);
