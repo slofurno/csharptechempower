@@ -212,7 +212,6 @@ namespace httplistener
 
     static void ProcessSend(SocketAsyncEventArgs e)
     {
-      Console.WriteLine("sent : " + e.BytesTransferred);
       CloseClientSocket(e);
     }
 
