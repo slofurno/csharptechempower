@@ -84,6 +84,7 @@ namespace httplistener
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
 
+      listenSocket.LingerState = new LingerOption(true, 0);
 
       listenSocket.Bind(endpoint);
       listenSocket.Listen(4000);
@@ -306,11 +307,11 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      //e.DisconnectReuseSocket = true;
+      e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
-      
+      /*
       try
       {
         token.Socket.Shutdown(SocketShutdown.Both);
@@ -329,17 +330,14 @@ namespace httplistener
         listenConnections.Push(e);
         _currentOpenSockets--;
       }
-
-      //token.Socket = null;
-      //e.AcceptSocket.Close();
-      //e.AcceptSocket = null;
+      */
       
-  /*
+  
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-      */
+      
             
     }
 
