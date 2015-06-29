@@ -306,31 +306,37 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = true;
+      //e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
-
-      /*
+      
       try
       {
-        token.Socket.Shutdown(SocketShutdown.Send);
+        token.Socket.Shutdown(SocketShutdown.Both);
       }
       // throws if client process has already closed 
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
 
-      token.Socket = null;
-      e.AcceptSocket.Close();
-      e.AcceptSocket = null;
-      */
-  
+      token.Socket.Disconnect(true);
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
+
+      //token.Socket = null;
+      //e.AcceptSocket.Close();
+      //e.AcceptSocket = null;
+      
+  /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-      
+      */
             
     }
 
