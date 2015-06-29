@@ -315,12 +315,12 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      //e.DisconnectReuseSocket = true;
+      e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
 
-      
+      /*
       try
       {
         token.Socket.Shutdown(SocketShutdown.Send);
@@ -333,19 +333,13 @@ namespace httplistener
       token.Socket = null;
       e.AcceptSocket.Close();
       e.AcceptSocket = null;
-
-      lock (listenConnections)
-      {
-        listenConnections.Push(e);
-        _currentOpenSockets--;
-      }
+      */
   
-      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-      */
+      
             
     }
 
