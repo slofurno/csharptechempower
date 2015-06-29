@@ -30,7 +30,6 @@ namespace httplistener
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
     static Stack<SocketAsyncEventArgs> availableConnections;
-    static byte[] socketBuffer;
     static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
@@ -136,6 +135,7 @@ namespace httplistener
         if (len > 0)
         {
           var path = Encoding.UTF8.GetString(buffer, space[0] + 1, space[1] - space[0] - 1);
+
           Serve(e, path);
         }
         else
@@ -215,10 +215,14 @@ namespace httplistener
       connection.UserToken = new UserSocket(socket);
       if (!socket.ReceiveAsync(connection))
       {
+        ProcessReceive(connection);
+
+        /*
         Task.Run(() =>
         {
           ProcessReceive(connection);
         });
+         * */
       }
 
     }
