@@ -265,6 +265,7 @@ namespace httplistener
 
       token.Socket.Disconnect(true);
       e.SetBuffer(0, 4096);
+      
 
       /*
       token.Socket.Close();
