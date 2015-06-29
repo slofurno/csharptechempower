@@ -33,6 +33,7 @@ namespace httplistener
     static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
+    static int _maxSockets = 0;
 
     static void Main(string[] args)
     {
@@ -190,7 +191,12 @@ namespace httplistener
       {
         connection = availableConnections.Pop();
         _currentOpenSockets++;
-        Console.WriteLine("open: " + _currentOpenSockets);
+
+        if (_currentOpenSockets > _maxSockets)
+        {
+          _maxSockets = _currentOpenSockets;
+        }
+        
       }
 
       connection.UserToken = new UserSocket(socket);
@@ -234,7 +240,7 @@ namespace httplistener
           response = Json();
           break;
         case "/db":
-          response = "";
+          response = "open: " + _currentOpenSockets;
           //await Db(writer).ConfigureAwait(false);
           break;
         case "/fortunes":
