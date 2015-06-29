@@ -326,7 +326,7 @@ namespace httplistener
       token.Socket = null;
       e.AcceptSocket = null;
 
-       * */
+      
 
       e.AcceptSocket.Disconnect(true);
 
@@ -336,15 +336,13 @@ namespace httplistener
         _currentOpenSockets--;
       }
       
-
-     
-
-  /*
+ * */
+  
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-      */
+      
             
     }
 
