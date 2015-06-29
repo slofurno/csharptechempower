@@ -311,7 +311,7 @@ namespace httplistener
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
-      /*
+      
       try
       {
         token.Socket.Shutdown(SocketShutdown.Both);
@@ -320,7 +320,7 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
-
+      /*
       token.Socket.Close();
       token.Socket = null;
       e.AcceptSocket = null;
