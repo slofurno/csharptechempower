@@ -141,6 +141,9 @@ namespace httplistener
         case SocketAsyncOperation.Accept:
           ProcessAccept(e);
           break;
+        case SocketAsyncOperation.Disconnect:
+          ProcessDisconnect(e);
+          break;
         default:
           throw new ArgumentException("The last operation completed on the socket was not a receive or send");
       }
@@ -251,10 +254,22 @@ namespace httplistener
     }
     */
 
+    static void ProcessDisconnect(SocketAsyncEventArgs e)
+    {
+
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
+
+    }
+
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-
+      e.DisconnectReuseSocket = true;
+      e.SetBuffer(0, 4096);
       // close the socket associated with the client 
       try
       {
@@ -263,24 +278,15 @@ namespace httplistener
       // throws if client process has already closed 
       catch (Exception) { }
 
-      token.Socket.Disconnect(false);
-      e.AcceptSocket = null;
-      e.SetBuffer(0, 4096);
-      
+      e.AcceptSocket.DisconnectAsync(e);
+      //e.AcceptSocket = null;
 
       /*
       token.Socket.Close();
       e.UserToken = null;
       e.SetBuffer(e.Offset, 4096);
       */
-
- 
-      lock (listenConnections)
-      {
-        listenConnections.Push(e);
-        _currentOpenSockets--;
-
-      }
+   
     }
 
 
