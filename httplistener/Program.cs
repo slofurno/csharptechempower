@@ -326,14 +326,18 @@ namespace httplistener
       token.Socket = null;
       e.AcceptSocket = null;
 
+       * */
+
+      e.AcceptSocket.Disconnect(true);
+
       lock (listenConnections)
       {
         listenConnections.Push(e);
         _currentOpenSockets--;
       }
-      */
+      
 
-      e.AcceptSocket.Disconnect(true);
+     
 
   /*
       if (!e.AcceptSocket.DisconnectAsync(e))
