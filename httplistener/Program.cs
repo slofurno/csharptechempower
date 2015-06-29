@@ -33,6 +33,7 @@ namespace httplistener
     static SliceManager sliceManager = new SliceManager(4096, 12000);
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
+    static BlockingCollection<SocketAsyncEventArgs> _connections;
 
     static void Main(string[] args)
     {
@@ -42,7 +43,15 @@ namespace httplistener
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
       //var qqq = ThreadPool.SetMinThreads(1, 4);
+      Task.Run(() =>
+      {
+        while (true)
+        {
+          var next = _connections.Take();
+          ProcessReceive(next);
+        }
 
+      });
       Listen();
       dontquit.WaitOne();
 
@@ -77,6 +86,9 @@ namespace httplistener
       acceptEventArg = new SocketAsyncEventArgs();
       acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(ProcessAccept);
 
+      _connections = new BlockingCollection<SocketAsyncEventArgs>();
+      
+
 
     }
 
@@ -85,7 +97,10 @@ namespace httplistener
       switch (e.LastOperation)
       {
         case SocketAsyncOperation.Receive:
-          ProcessReceive(e);
+
+          _connections.Add(e);
+
+          //ProcessReceive(e);
           break;
         case SocketAsyncOperation.Send:
           ProcessSend(e);
@@ -215,7 +230,8 @@ namespace httplistener
       connection.UserToken = new UserSocket(socket);
       if (!socket.ReceiveAsync(connection))
       {
-        ProcessReceive(connection);
+
+        _connections.Add(connection);
 
         /*
         Task.Run(() =>
