@@ -312,7 +312,7 @@ namespace httplistener
       UserSocket token = e.UserToken as UserSocket;
       e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
-      token.Socket = null;
+      
       // close the socket associated with the client 
       try
       {
@@ -321,10 +321,22 @@ namespace httplistener
       // throws if client process has already closed 
       catch (Exception) { }
 
+      token.Socket = null;
+      e.AcceptSocket.Disconnect(true);
+
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
+
+      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
+      */
+
       //e.AcceptSocket = null;
 
       /*
