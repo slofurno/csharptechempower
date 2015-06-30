@@ -548,7 +548,7 @@ namespace httplistener
       {
         conn.Open();
 
-        fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
+        fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM dev.fortunes").ToList();
 
         fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
         fortunes.Sort();
