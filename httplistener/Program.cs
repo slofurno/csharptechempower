@@ -544,22 +544,27 @@ namespace httplistener
     {
       List<Fortune> fortunes;
 
-      var conn = PsqlContext.GetConnection();
+      using (var conn = PsqlContext.GetConnection())
+      {
+        conn.Open();
 
-      fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
+        fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
-      fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
-      fortunes.Sort();
+        fortunes.Add(new Fortune { ID = 0, Message = "Additional fortune added at request time." });
+        fortunes.Sort();
 
-      const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
+        const string header = "<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>";
 
-      const string footer = "</table></body></html>";
+        const string footer = "</table></body></html>";
 
-      var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
-      var content = header + body + footer;
-      var len = Encoding.UTF8.GetByteCount(content);
+        var body = string.Join("", fortunes.Select(x => "<tr><td>" + x.ID + "</td><td>" + x.Message + "</td></tr>"));
+        var content = header + body + footer;
+        var len = Encoding.UTF8.GetByteCount(content);
 
-      return string.Format(RESPONSE, len, "text/html", content);
+        return string.Format(RESPONSE, len, "text/html", content);
+      }
+
+      
     }
 
   }
