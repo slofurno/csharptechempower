@@ -197,6 +197,46 @@ namespace httplistener
       return false;
     }
 
+
+    static void ProcessAccept(SocketAsyncEventArgs e)
+    {
+      UserSocket token = (UserSocket)e.UserToken;
+
+      Task.Run(() =>
+      {
+
+        if (e.SocketError != SocketError.Success)
+        {
+          Console.WriteLine("failed to accept socket");
+          CloseClientSocket(e);
+        }
+        else
+        {
+          var read = e.BytesTransferred;
+          token.Socket = e.AcceptSocket;
+          token.Read = read;
+          e.SetBuffer(read, 4096 - read);
+
+
+          if (read >= 4 && TryParseRequest(e))
+          {
+
+            Serve(e);
+          }
+          else
+          {
+            if (!e.AcceptSocket.ReceiveAsync(e))
+            {
+              ProcessReceive(e);
+            }
+          }
+        }
+      });
+
+      Listen();
+    }
+
+
     static void ProcessReceive(SocketAsyncEventArgs e)
     {
 
@@ -213,7 +253,7 @@ namespace httplistener
         token.Read += read;
         e.SetBuffer(token.Read, 4096 - token.Read);
 
-        if (read > 0 && TryParseRequest(e))
+        if (token.Read >= 4 && TryParseRequest(e))
         {
           Serve(e);
 
@@ -245,47 +285,7 @@ namespace httplistener
       CloseClientSocket(e);
     }
 
-    static void ProcessAccept(SocketAsyncEventArgs e)
-    {
-      UserSocket token = (UserSocket)e.UserToken;
-
-      Task.Run(() =>
-      {
-
-        if (e.SocketError != SocketError.Success)
-        {
-          Console.WriteLine("failed to accept socket");
-          CloseClientSocket(e);
-        }
-        else
-        {
-          var read = e.BytesTransferred;
-          token.Socket = e.AcceptSocket;
-          token.Read = read;
-          e.SetBuffer(read, 4096 - read);
-
-          
-          if (read >=4 && TryParseRequest(e))
-          {
-            
-            Serve(e);
-          }
-          else
-          {
-            if (!e.AcceptSocket.ReceiveAsync(e))
-            {
-              ProcessReceive(e);
-            }
-          }
-           
-        }
-
    
-      });
-
-      Listen();
-
-    }
 
     /*
     static void ProcessAccept2(Object sender, SocketAsyncEventArgs e)
