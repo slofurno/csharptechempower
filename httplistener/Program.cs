@@ -213,7 +213,7 @@ namespace httplistener
         if (e.SocketError != SocketError.Success)
         {
           Console.WriteLine("failed to accept socket");
-          CloseClientSocket(e);
+          StartCloseSocket(e);
         }
         else
         {
@@ -254,7 +254,11 @@ namespace httplistener
         Serve(e);
 
       }*/
-      if (e.SocketError == SocketError.Success)
+      if (read == 0)
+      {
+        CloseSocket(e);
+      }
+      else if (e.SocketError == SocketError.Success)
       {
         token.Read += read;
         e.SetBuffer(token.Read, 4096 - token.Read);
@@ -275,7 +279,7 @@ namespace httplistener
       else
       {
         Console.WriteLine("closing early after reading " + read + " : " + e.SocketError.ToString());
-        CloseClientSocket(e);
+        StartCloseSocket(e);
       }
 
     }
@@ -288,7 +292,7 @@ namespace httplistener
         Console.WriteLine("only wrote " + e.BytesTransferred + " out of " + token.Read);
       }
 
-      CloseClientSocket(e);
+      StartCloseSocket(e);
     }
 
    
@@ -344,17 +348,24 @@ namespace httplistener
 
     }
 
-    static void CloseClientSocket(SocketAsyncEventArgs e)
+    static void CloseSocket(SocketAsyncEventArgs e)
+    {
+      if (!e.AcceptSocket.DisconnectAsync(e))
+      {
+        ProcessDisconnect(e);
+      }
+
+    }
+
+    static void StartCloseSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
       e.DisconnectReuseSocket = false;
       e.SetBuffer(0, 4096);
       token.IsParsed = false;
-      token.Socket = null;
+      //token.Socket = null;
 
       // close the socket associated with the client 
-      
-      /*
       try
       {
         
@@ -364,12 +375,17 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
-      */
 
+      if (!e.AcceptSocket.ReceiveAsync(e))
+      {
+        ProcessReceive(e);
+      }
+
+      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
-      }
+      }*/
 
       /*
       token.Socket = null;
