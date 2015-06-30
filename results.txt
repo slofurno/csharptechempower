@@ -1,0 +1,36 @@
+Server Software:        Example
+Server Hostname:        100.112.242.54
+Server Port:            8080
+
+Document Path:          /fortunes
+Document Length:        1607 bytes
+
+Concurrency Level:      32
+Time taken for tests:   3.961 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      34840000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    5049.48 [#/sec] (mean)
+Time per request:       6.337 [ms] (mean)
+Time per request:       0.198 [ms] (mean, across all concurrent requests)
+Transfer rate:          8590.04 [Kbytes/sec] received
+
+
+Server Software:        Example
+Server Hostname:        100.112.242.54
+Server Port:            8080
+
+Document Path:          /json
+Document Length:        27 bytes
+
+Concurrency Level:      32
+Time taken for tests:   1.725 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      3340000 bytes
+HTML transferred:       540000 bytes
+Requests per second:    11592.64 [#/sec] (mean)
+Time per request:       2.760 [ms] (mean)
+Time per request:       0.086 [ms] (mean, across all concurrent requests)
+Transfer rate:          1890.60 [Kbytes/sec] received

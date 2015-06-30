@@ -68,12 +68,10 @@ namespace httplistener
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
   
       listenSocket.LingerState = new LingerOption(true, 0);
-      
+      listenSocket.NoDelay = true;
+
       listenSocket.Bind(endpoint);
       listenSocket.Listen(8000);
-
-      var b = new byte[4096];
-        
 
     }
 
@@ -181,6 +179,8 @@ namespace httplistener
     static void ProcessAccept(SocketAsyncEventArgs e)
     {
       UserSocket token = (UserSocket)e.UserToken;
+      token.Socket = e.AcceptSocket;
+      _listenNext.Set();
 
       Task.Run(() =>
       {
@@ -193,8 +193,8 @@ namespace httplistener
         else
         {
           var read = e.BytesTransferred;
-          token.Socket = e.AcceptSocket;
-          token.Socket.NoDelay = true;
+         
+          //token.Socket.NoDelay = true;
           token.Read = read;
           e.SetBuffer(read, 4096 - read);
 
@@ -214,7 +214,6 @@ namespace httplistener
         }
       });
 
-      _listenNext.Set();
     }
 
 
