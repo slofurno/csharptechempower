@@ -29,9 +29,7 @@ namespace httplistener
 
     static string RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: {0}\r\nContent-Type: {1}; charset=UTF-8\r\nServer: Example\r\nDate: Wed, 17 Apr 2013 12:00:00 GMT\r\n\r\n{2}";
 
-    static Stack<SocketAsyncEventArgs> listenConnections;
-    //static Stack<SocketAsyncEventArgs> availableConnections;
-    //static SliceManager sliceManager = new SliceManager(4096, 12000);
+    static Stack<SocketAsyncEventArgs> availableConnections;
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
     static int _maxSockets = 0;
@@ -43,10 +41,9 @@ namespace httplistener
       Init();
       System.Net.ServicePointManager.DefaultConnectionLimit = int.MaxValue;
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
-      //var qqq = ThreadPool.SetMinThreads(1, 4);
 
       Listen();
-      dontquit.WaitOne();
+
 
     }
 
@@ -55,8 +52,7 @@ namespace httplistener
 
     static void Init()
     {
-      //availableConnections = new Stack<SocketAsyncEventArgs>();
-      listenConnections = new Stack<SocketAsyncEventArgs>();
+      availableConnections = new Stack<SocketAsyncEventArgs>();
 
       for (int i = 0; i < 128; i++)
       {
@@ -66,25 +62,17 @@ namespace httplistener
         var buffer = new byte[4096];
         next.SetBuffer(buffer, 0, 4096);
 
-        listenConnections.Push(next);
-      }
-      /*
-      for (int i = 0; i < 12000; i++)
-      {
-        var next = new SocketAsyncEventArgs();
-        next.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
-        next.UserToken = new UserSocket();
-        sliceManager.setBuffer(next);
-
         availableConnections.Push(next);
       }
-      */
+      
 
       var endpoint = new IPEndPoint(IPAddress.Any, 8080);
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
       
+      /*
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+       * */
       /*
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, false);
        * */
@@ -107,25 +95,27 @@ namespace httplistener
 
     static void Listen()
     {
-      SocketAsyncEventArgs args;
 
-      lock (listenConnections)
+      while (true)
       {
-        args = listenConnections.Pop();
-        _currentOpenSockets++;
-        if (_currentOpenSockets > _maxSockets)
+        SocketAsyncEventArgs args;
+        _listenNext.WaitOne();
+
+        lock (availableConnections)
         {
-          _maxSockets = _currentOpenSockets;
+          args = availableConnections.Pop();
+          _currentOpenSockets++;
+          if (_currentOpenSockets > _maxSockets)
+          {
+            _maxSockets = _currentOpenSockets;
+          }
+        }
+
+        if (!listenSocket.AcceptAsync(args))
+        {
+          ProcessAccept(args);
         }
       }
-
-      if (!listenSocket.AcceptAsync(args))
-      {
-        ProcessAccept(args);
-         
-      }
-      
- 
 
     }
 
@@ -240,7 +230,7 @@ namespace httplistener
         }
       });
 
-      Listen();
+      _listenNext.Set();
     }
 
 
@@ -341,9 +331,9 @@ namespace httplistener
 
      //e.AcceptSocket = null;
      
-      lock (listenConnections)
+      lock (availableConnections)
       {
-        listenConnections.Push(e);
+        availableConnections.Push(e);
         _currentOpenSockets--;
       }
 
@@ -355,9 +345,9 @@ namespace httplistener
       e.AcceptSocket.Close();
       e.AcceptSocket = null;
 
-      lock (listenConnections)
+      lock (availableConnections)
       {
-        listenConnections.Push(e);
+        availableConnections.Push(e);
         _currentOpenSockets--;
       }
 
