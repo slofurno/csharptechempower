@@ -352,7 +352,7 @@ namespace httplistener
       try
       {
         
-        token.Socket.Shutdown(SocketShutdown.Both);
+        token.Socket.Shutdown(SocketShutdown.Send);
       }
       // throws if client process has already closed 
       catch (Exception ex) {
