@@ -214,11 +214,9 @@ namespace httplistener
       }
       else
       {
-        Console.WriteLine("closing early");
-        if (!e.AcceptSocket.ReceiveAsync(e))
-        {
-          ProcessReceive(e);
-        }
+        Console.WriteLine("closing early after reading " + read + " : " + e.SocketError.ToString());
+
+        CloseClientSocket(e);
       }
 
     }
@@ -239,19 +237,30 @@ namespace httplistener
 
       Task.Run(() =>
       {
-        var read = e.BytesTransferred;
-        token.Socket = e.AcceptSocket;
-        token.Read = read;
-        e.SetBuffer(read, 4096 - read);
 
-        if (read > 0 && TryParseRequest(e))
+        if (e.SocketError != SocketError.Success)
         {
-          Serve(e);
+          Console.WriteLine("failed to accept socket");
+          CloseClientSocket(e);
         }
-        else if (!e.AcceptSocket.ReceiveAsync(e))
+        else
         {
-          ProcessReceive(e);
+          var read = e.BytesTransferred;
+          token.Socket = e.AcceptSocket;
+          token.Read = read;
+          e.SetBuffer(read, 4096 - read);
+
+          if (read > 0 && TryParseRequest(e))
+          {
+            Serve(e);
+          }
+          else if (!e.AcceptSocket.ReceiveAsync(e))
+          {
+            ProcessReceive(e);
+          }
         }
+
+   
       });
 
       Listen();
