@@ -43,12 +43,9 @@ namespace httplistener
       System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
       Listen();
-
-
     }
 
     static Socket listenSocket;
-    static SocketAsyncEventArgs listenArgs;
 
     static void Init()
     {
@@ -69,27 +66,14 @@ namespace httplistener
       var endpoint = new IPEndPoint(IPAddress.Any, 8080);
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
-      
-      /*
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-       * */
-      /*
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, false);
-       * */
-
-      //mono cant handle this
-      //listenSocket.LingerState = new LingerOption(true, 0);
+  
+      listenSocket.LingerState = new LingerOption(true, 0);
       
       listenSocket.Bind(endpoint);
       listenSocket.Listen(8000);
 
       var b = new byte[4096];
-
-      listenArgs = new SocketAsyncEventArgs();
-
-
-
-   
+        
 
     }
 
