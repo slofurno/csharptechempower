@@ -33,6 +33,7 @@ namespace httplistener
     static AutoResetEvent _listenNext = new AutoResetEvent(true);
     static int _currentOpenSockets = 0;
     static int _maxSockets = 0;
+    const int STACK_SIZE = 1024;
 
     static void Main(string[] args)
     {
@@ -51,7 +52,7 @@ namespace httplistener
     {
       availableConnections = new Stack<SocketAsyncEventArgs>();
 
-      for (int i = 0; i < 128; i++)
+      for (int i = 0; i < STACK_SIZE; i++)
       {
         var next = new SocketAsyncEventArgs();
         next.Completed += new EventHandler<SocketAsyncEventArgs>(SocketEventComplete);
