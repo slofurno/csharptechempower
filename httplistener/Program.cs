@@ -352,7 +352,7 @@ namespace httplistener
 
       // close the socket associated with the client 
       
-      
+      /*
       try
       {
         
@@ -362,6 +362,7 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
+      */
 
       token.Socket.Close();
       token.Socket = null;
