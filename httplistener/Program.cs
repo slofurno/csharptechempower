@@ -339,7 +339,7 @@ namespace httplistener
         Console.WriteLine("failed to d/c");
       }
 
-     e.AcceptSocket = null;
+     //e.AcceptSocket = null;
      
       lock (listenConnections)
       {
@@ -361,7 +361,7 @@ namespace httplistener
     static void StartCloseSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = false;
+      e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       token.IsParsed = false;
       //token.Socket = null;
