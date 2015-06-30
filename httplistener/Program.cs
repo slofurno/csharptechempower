@@ -90,36 +90,32 @@ namespace httplistener
       listenSocket.Bind(endpoint);
       listenSocket.Listen(8000);
 
+
+
    
 
     }
 
     static void Listen()
     {
-      while (true)
+      SocketAsyncEventArgs args;
+
+      lock (listenConnections)
       {
-        SocketAsyncEventArgs args;
-
-        _listenNext.WaitOne();
-
-        lock (listenConnections)
+        args = listenConnections.Pop();
+        _currentOpenSockets++;
+        if (_currentOpenSockets > _maxSockets)
         {
-          args = listenConnections.Pop();
-          _currentOpenSockets++;
-          if (_currentOpenSockets > _maxSockets)
-          {
-            _maxSockets = _currentOpenSockets;
-          }
-        }
-
-        if (!listenSocket.AcceptAsync(args))
-        {
-          Task.Run(() =>
-          {
-            ProcessAccept(args);
-          });
+          _maxSockets = _currentOpenSockets;
         }
       }
+
+      if (!listenSocket.AcceptAsync(args))
+      {
+        ProcessAccept(args);
+         
+      }
+      
  
 
     }
@@ -233,27 +229,26 @@ namespace httplistener
 
     static void ProcessAccept(SocketAsyncEventArgs e)
     {
-      _listenNext.Set();
-
       UserSocket token = (UserSocket)e.UserToken;
-      var read = e.BytesTransferred;
-      token.Socket = e.AcceptSocket;
-      token.Read = read;
-      e.SetBuffer(read, 4096 - read);
 
-      if (read > 0 && TryParseRequest(e))
+      Task.Run(() =>
       {
-        Serve(e);
-      }
-      else if (!e.AcceptSocket.ReceiveAsync(e))
-      {
-        ProcessReceive(e);
-      }
-    
+        var read = e.BytesTransferred;
+        token.Socket = e.AcceptSocket;
+        token.Read = read;
+        e.SetBuffer(read, 4096 - read);
 
+        if (read > 0 && TryParseRequest(e))
+        {
+          Serve(e);
+        }
+        else if (!e.AcceptSocket.ReceiveAsync(e))
+        {
+          ProcessReceive(e);
+        }
+      });
 
-      
-
+      Listen();
 
     }
 
@@ -298,6 +293,9 @@ namespace httplistener
         Console.WriteLine("failed to d/c");
       }
 
+     
+      e.AcceptSocket = null;
+
       lock (listenConnections)
       {
         listenConnections.Push(e);
@@ -309,7 +307,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = true;
+      //e.DisconnectReuseSocket = false;
       e.SetBuffer(0, 4096);
       
       // close the socket associated with the client 
@@ -322,10 +320,19 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
+
+      token.Socket = null;
+
+      if (!e.AcceptSocket.DisconnectAsync(e))
+      {
+        ProcessDisconnect(e);
+      }
+
+
+
       /*
       token.Socket.Close();
-      token.Socket = null;
-      e.AcceptSocket = null;
+ 
 
       
 
@@ -339,10 +346,7 @@ namespace httplistener
       
  * */
   
-      if (!e.AcceptSocket.DisconnectAsync(e))
-      {
-        ProcessDisconnect(e);
-      }
+   
       
             
     }
