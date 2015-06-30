@@ -358,8 +358,16 @@ namespace httplistener
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
-      
-   
+
+      token.Socket.Close();
+      token.Socket = null;
+      e.AcceptSocket = null;
+
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
 
       /*
       token.Socket = null;
@@ -371,15 +379,15 @@ namespace httplistener
         listenConnections.Push(e);
         _currentOpenSockets--;
       }
-      */
+      
       
       
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-       
-            
+       */
+
     }
 
 
