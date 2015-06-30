@@ -356,13 +356,7 @@ namespace httplistener
         Console.WriteLine(ex.Message);
       }
 
-      e.AcceptSocket.Disconnect(true);
-
-      lock (listenConnections)
-      {
-        listenConnections.Push(e);
-        _currentOpenSockets--;
-      }
+   
 
       /*
       token.Socket = null;
@@ -376,12 +370,12 @@ namespace httplistener
       }
       */
       
-      /*
+      
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-       * */
+       
             
     }
 
