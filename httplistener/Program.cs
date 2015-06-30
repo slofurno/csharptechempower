@@ -376,7 +376,7 @@ namespace httplistener
       switch (path)
       {
         case "/plaintext":
-          InitPSQL();
+          //InitPSQL();
           response = "Hello, World!";
           //await Plaintext(writer).ConfigureAwait(false);
           break;
@@ -543,7 +543,8 @@ namespace httplistener
     private static string Fortunes()
     {
       List<Fortune> fortunes;
-      var conn = SqliteContext.GetConnection();
+
+      var conn = PsqlContext.GetConnection();
 
       fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
