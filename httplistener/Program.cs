@@ -342,7 +342,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = true;
+     // e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       token.IsParsed = false;
 
