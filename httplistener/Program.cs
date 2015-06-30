@@ -87,6 +87,7 @@ namespace httplistener
       
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
 
+      //mono cant handle this
       //listenSocket.LingerState = new LingerOption(true, 0);
       
       listenSocket.Bind(endpoint);
@@ -338,7 +339,7 @@ namespace httplistener
     static void CloseClientSocket(SocketAsyncEventArgs e)
     {
       UserSocket token = e.UserToken as UserSocket;
-      e.DisconnectReuseSocket = false;
+      e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       token.IsParsed = false;
 
