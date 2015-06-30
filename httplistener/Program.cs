@@ -359,6 +359,9 @@ namespace httplistener
         var fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
 
         conn2.Execute("INSERT INTO dev.Fortunes (Id,Message) VALUES (@Id,@Message)", fortunes);
+
+        Console.WriteLine("inserted");
+
       }
    
     }
