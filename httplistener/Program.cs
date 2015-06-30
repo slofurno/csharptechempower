@@ -87,7 +87,7 @@ namespace httplistener
       
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
 
-      listenSocket.LingerState = new LingerOption(true, 0);
+      //listenSocket.LingerState = new LingerOption(true, 0);
       
       listenSocket.Bind(endpoint);
       listenSocket.Listen(8000);
