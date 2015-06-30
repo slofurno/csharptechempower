@@ -19,3 +19,12 @@ C:\dev\csharp\csharptechempower\httplistener\bin\Release\System.Data.SQLite.xml
 C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.exe
 C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.pdb
 C:\dev\csharp\csharptechempower\httplistener\obj\Release\httplistener.csprojResolveAssemblyReference.cache
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\Mono.Security.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\Npgsql.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\Npgsql.xml
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\de\Npgsql.resources.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\es\Npgsql.resources.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\fi\Npgsql.resources.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\fr\Npgsql.resources.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\ja\Npgsql.resources.dll
+C:\dev\csharp\csharptechempower\httplistener\bin\Release\zh-CN\Npgsql.resources.dll

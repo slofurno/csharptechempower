@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
+using Npgsql;
 
 
 
@@ -37,6 +38,10 @@ namespace httplistener
 
     static void Main(string[] args)
     {
+
+
+
+
       var dontquit = new AutoResetEvent(false);
 
       Init();
@@ -345,6 +350,19 @@ namespace httplistener
 
     }
 
+    static void InitPSQL()
+    {
+      using (var conn = SqliteContext.GetConnection())
+      using (var conn2 = PsqlContext.GetConnection())
+      {
+        conn2.Open();
+        var fortunes = conn.Query<Fortune>(@"SELECT Id,Message FROM Fortune").ToList();
+
+        conn2.Execute("INSERT INTO dev.Fortunes (Id,Message) VALUES (@Id,@Message)", fortunes);
+      }
+   
+    }
+
 
     static void Serve(SocketAsyncEventArgs e)
     {
@@ -355,7 +373,8 @@ namespace httplistener
       switch (path)
       {
         case "/plaintext":
-          response = "";
+          InitPSQL();
+          response = "Hello, World!";
           //await Plaintext(writer).ConfigureAwait(false);
           break;
         case "/json":
@@ -556,6 +575,15 @@ namespace httplistener
     public int CompareTo(Fortune other)
     {
       return Message.CompareTo(other.Message);
+    }
+  }
+
+  public static class PsqlContext
+  {
+
+    public static NpgsqlConnection GetConnection()
+    {
+      return new NpgsqlConnection("Server=127.0.0.1;Port=5432;User Id=pdev;Password=pdev;Database=postgres");
     }
   }
 
