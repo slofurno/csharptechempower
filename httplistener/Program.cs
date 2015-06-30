@@ -351,10 +351,22 @@ namespace httplistener
 
     static void CloseSocket(SocketAsyncEventArgs e)
     {
+
+      e.AcceptSocket.Close();
+      e.AcceptSocket = null;
+
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
+
+      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
+       * */
 
     }
 
@@ -364,13 +376,13 @@ namespace httplistener
       e.DisconnectReuseSocket = true;
       e.SetBuffer(0, 4096);
       token.IsParsed = false;
-      //token.Socket = null;
+      token.Socket = null;
 
       // close the socket associated with the client 
       try
       {
         
-        token.Socket.Shutdown(SocketShutdown.Send);
+        e.AcceptSocket.Shutdown(SocketShutdown.Send);
       }
       // throws if client process has already closed 
       catch (Exception ex) {
