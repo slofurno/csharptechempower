@@ -214,6 +214,7 @@ namespace httplistener
         {
           var read = e.BytesTransferred;
           token.Socket = e.AcceptSocket;
+          token.Socket.NoDelay = true;
           token.Read = read;
           e.SetBuffer(read, 4096 - read);
 
@@ -347,13 +348,21 @@ namespace httplistener
       
       try
       {
-        token.Socket.Shutdown(SocketShutdown.Send);
+        
+        token.Socket.Shutdown(SocketShutdown.Both);
       }
       // throws if client process has already closed 
       catch (Exception ex) {
         Console.WriteLine(ex.Message);
       }
 
+      e.AcceptSocket.Disconnect(true);
+
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
 
       /*
       token.Socket = null;
@@ -367,10 +376,12 @@ namespace httplistener
       }
       */
       
+      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
+       * */
             
     }
 
