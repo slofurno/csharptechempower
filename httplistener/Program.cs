@@ -328,6 +328,12 @@ namespace httplistener
       e.AcceptSocket.Disconnect(true);
       e.AcceptSocket = null;
 
+      lock (listenConnections)
+      {
+        listenConnections.Push(e);
+        _currentOpenSockets--;
+      }
+
       /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
@@ -344,11 +350,7 @@ namespace httplistener
 
       
 
-      lock (listenConnections)
-      {
-        listenConnections.Push(e);
-        _currentOpenSockets--;
-      }
+ 
       
  * */
   
