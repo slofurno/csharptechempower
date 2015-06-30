@@ -198,6 +198,7 @@ namespace httplistener
       UserSocket token = (UserSocket)e.UserToken;
 
       token.Read += read;
+      e.SetBuffer(token.Read, 4096 - token.Read);
       if (read > 0 && e.SocketError == SocketError.Success)
       {
         if (TryParseRequest(e))
@@ -214,8 +215,10 @@ namespace httplistener
       else
       {
         Console.WriteLine("closing early");
-        CloseClientSocket(e);
-
+        if (!e.AcceptSocket.ReceiveAsync(e))
+        {
+          ProcessReceive(e);
+        }
       }
 
     }
