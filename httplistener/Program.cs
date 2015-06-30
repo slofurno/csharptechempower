@@ -328,6 +328,8 @@ namespace httplistener
       {
         Console.WriteLine("failed to d/c");
       }
+
+      e.AcceptSocket = null;
      
       lock (listenConnections)
       {
