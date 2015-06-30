@@ -85,7 +85,8 @@ namespace httplistener
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, false);
       
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
- 
+
+      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, false);
 
       //mono cant handle this
       //listenSocket.LingerState = new LingerOption(true, 0);
