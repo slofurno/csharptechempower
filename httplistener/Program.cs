@@ -153,6 +153,7 @@ namespace httplistener
       var space = new int[2];
       int s = 0;
       const byte del = (byte)'\r';
+      const byte n = (byte)'\n';
       const byte sep = (byte)0x20;
       var buffer = e.Buffer;
       int offset = 0;
@@ -184,8 +185,13 @@ namespace httplistener
         var path = Encoding.UTF8.GetString(buffer, space[0] + 1, len);
         token.Path = path;
         e.SetBuffer(0, 4096);
-        return true;
+        token.IsParsed = true;
 
+      }
+
+      if ((buffer[read - 4] == del) && (buffer[read - 3] == n) && (buffer[read - 2] == del) && (buffer[read - 1] == n))
+      {
+        return true;
       }
 
       return false;
@@ -197,10 +203,17 @@ namespace httplistener
       int read = e.BytesTransferred;
       UserSocket token = (UserSocket)e.UserToken;
 
-      token.Read += read;
-      e.SetBuffer(token.Read, 4096 - token.Read);
-      if (read > 0 && e.SocketError == SocketError.Success)
+      if (token.IsParsed)
       {
+        Serve(e);
+
+      }
+      else if (read > 0 && e.SocketError == SocketError.Success)
+      {
+
+        token.Read += read;
+        e.SetBuffer(token.Read, 4096 - token.Read);
+
         if (TryParseRequest(e))
         {
           Serve(e);
@@ -228,6 +241,7 @@ namespace httplistener
       {
         Console.WriteLine("only wrote " + e.BytesTransferred + " out of " + token.Read);
       }
+
       CloseClientSocket(e);
     }
 
@@ -250,14 +264,20 @@ namespace httplistener
           token.Read = read;
           e.SetBuffer(read, 4096 - read);
 
-          if (read > 0 && TryParseRequest(e))
+          
+          if (read >=4 && TryParseRequest(e))
           {
+            
             Serve(e);
           }
-          else if (!e.AcceptSocket.ReceiveAsync(e))
+          else
           {
-            ProcessReceive(e);
+            if (!e.AcceptSocket.ReceiveAsync(e))
+            {
+              ProcessReceive(e);
+            }
           }
+           
         }
 
    
@@ -337,6 +357,8 @@ namespace httplistener
       }
 
       token.Socket = null;
+      token.IsParsed = false;
+
       e.AcceptSocket.Disconnect(true);
       e.AcceptSocket = null;
 

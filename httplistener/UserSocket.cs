@@ -12,6 +12,7 @@ namespace httplistener
     public Socket Socket { get; set; }
     public int Read { get; set; }
     public string Path { get; set; }
+    public bool IsParsed { get; set; }
 
     public UserSocket()
     {
