@@ -202,33 +202,33 @@ namespace httplistener
 
       int read = e.BytesTransferred;
       UserSocket token = (UserSocket)e.UserToken;
-
+      /*
       if (token.IsParsed)
       {
         Serve(e);
 
-      }
-      else if (read > 0 && e.SocketError == SocketError.Success)
+      }*/
+      if (e.SocketError == SocketError.Success)
       {
-
         token.Read += read;
         e.SetBuffer(token.Read, 4096 - token.Read);
 
-        if (TryParseRequest(e))
+        if (read > 0 && TryParseRequest(e))
         {
           Serve(e);
+
         }
         else
         {
-          Console.WriteLine("failed to parse header");
-          CloseClientSocket(e);
+          if (!e.AcceptSocket.ReceiveAsync(e))
+          {
+            ProcessReceive(e);
+          }
         }
-
       }
       else
       {
         Console.WriteLine("closing early after reading " + read + " : " + e.SocketError.ToString());
-
         CloseClientSocket(e);
       }
 
