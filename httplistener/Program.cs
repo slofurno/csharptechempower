@@ -286,41 +286,6 @@ namespace httplistener
       StartCloseSocket(e);
     }
 
-   
-
-    /*
-    static void ProcessAccept2(Object sender, SocketAsyncEventArgs e)
-    {
-      SocketAsyncEventArgs connection;
-      Socket socket = e.AcceptSocket;
-
-      var rec = Encoding.UTF8.GetString(e.Buffer, 0, e.BytesTransferred);
-
-      lock (availableConnections)
-      {
-        connection = availableConnections.Pop();
-        _currentOpenSockets++;
-
-        if (_currentOpenSockets > _maxSockets)
-        {
-          _maxSockets = _currentOpenSockets;
-        }
-        
-      }
-
-      connection.UserToken = new UserSocket(socket);
-      if (!socket.ReceiveAsync(connection))
-      {
-        Task.Run(() =>
-        {
-          ProcessReceive(connection);
-        });
-      }
-
-      Listen();
-
-    }
-    */
 
     static void ProcessDisconnect(SocketAsyncEventArgs e)
     {
@@ -328,8 +293,6 @@ namespace httplistener
       {
         Console.WriteLine("failed to d/c");
       }
-
-     //e.AcceptSocket = null;
      
       lock (availableConnections)
       {
@@ -341,23 +304,10 @@ namespace httplistener
 
     static void CloseSocket(SocketAsyncEventArgs e)
     {
-
-      e.AcceptSocket.Close();
-      e.AcceptSocket = null;
-
-      lock (availableConnections)
-      {
-        availableConnections.Push(e);
-        _currentOpenSockets--;
-      }
-
-      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-       * */
-
     }
 
     static void StartCloseSocket(SocketAsyncEventArgs e)
