@@ -85,6 +85,7 @@ namespace httplistener
       
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
       /*
+       * one of these causes serious issues on mono
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
 
       listenSocket.LingerState = new LingerOption(true, 0);
@@ -324,12 +325,15 @@ namespace httplistener
       }
 
       token.Socket = null;
+      e.AcceptSocket.Disconnect(true);
+      e.AcceptSocket = null;
 
+      /*
       if (!e.AcceptSocket.DisconnectAsync(e))
       {
         ProcessDisconnect(e);
       }
-
+      */
 
 
       /*
@@ -338,7 +342,7 @@ namespace httplistener
 
       
 
-      e.AcceptSocket.Disconnect(true);
+      
 
       lock (listenConnections)
       {
