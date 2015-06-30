@@ -51,6 +51,7 @@ namespace httplistener
     }
 
     static Socket listenSocket;
+    static SocketAsyncEventArgs listenArgs;
 
     static void Init()
     {
@@ -83,15 +84,18 @@ namespace httplistener
       listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
       listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
       
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-      
-      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, false);
+      listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+ 
 
       //mono cant handle this
       //listenSocket.LingerState = new LingerOption(true, 0);
       
       listenSocket.Bind(endpoint);
       listenSocket.Listen(8000);
+
+      var b = new byte[4096];
+
+      listenArgs = new SocketAsyncEventArgs();
 
 
 
