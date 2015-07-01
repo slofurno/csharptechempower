@@ -592,7 +592,7 @@ namespace httplistener
 
     public static NpgsqlConnection GetConnection()
     {
-      return new NpgsqlConnection("Server=127.0.0.1;Port=5432;User Id=pdev;Password=pdev;Database=postgres");
+      return new NpgsqlConnection("PORT=5432;TIMEOUT=15;POOLING=True;MINPOOLSIZE=20;MAXPOOLSIZE=20;COMMANDTIMEOUT=20;COMPATIBLE=2.2.5.0;HOST=127.0.0.1;USER ID=pdev;PASSWORD=pdev;DATABASE=postgres");
     }
   }
 
