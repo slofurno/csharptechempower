@@ -1,3 +1,5 @@
+d
+
 Server Software:        Example
 Server Hostname:        100.112.242.54
 Server Port:            8080
@@ -34,3 +36,19 @@ Requests per second:    11592.64 [#/sec] (mean)
 Time per request:       2.760 [ms] (mean)
 Time per request:       0.086 [ms] (mean, across all concurrent requests)
 Transfer rate:          1890.60 [Kbytes/sec] received
+
+
+Document Path:          /fortunes
+Document Length:        1607 bytes
+
+Concurrency Level:      16
+Time taken for tests:   10.562 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      34840000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    1893.63 [#/sec] (mean)
+Time per request:       8.449 [ms] (mean)
+Time per request:       0.528 [ms] (mean, across all concurrent requests)
+Transfer rate:          3221.39 [Kbytes/sec] received
+

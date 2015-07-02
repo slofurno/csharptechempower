@@ -376,7 +376,7 @@ namespace httplistener
       switch (path)
       {
         case "/plaintext":
-          InitPSQL();
+         // InitPSQL();
           response = "Hello, World!";
           //await Plaintext(writer).ConfigureAwait(false);
           break;
