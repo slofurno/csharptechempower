@@ -1,4 +1,4 @@
-d
+df
 
 Server Software:        Example
 Server Hostname:        100.112.242.54
