@@ -52,3 +52,86 @@ Time per request:       8.449 [ms] (mean)
 Time per request:       0.528 [ms] (mean, across all concurrent requests)
 Transfer rate:          3221.39 [Kbytes/sec] received
 
+
+
+Concurrency Level:      32
+Time taken for tests:   2.266 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      4360000 bytes
+HTML transferred:       540000 bytes
+Requests per second:    8826.08 [#/sec] (mean)
+Time per request:       3.626 [ms] (mean)
+Time per request:       0.113 [ms] (mean, across all concurrent requests)
+Transfer rate:          1878.99 [Kbytes/sec] received
+
+
+Concurrency Level:      32
+Time taken for tests:   7.320 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      35860000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    2732.33 [#/sec] (mean)
+Time per request:       11.712 [ms] (mean)
+Time per request:       0.366 [ms] (mean, across all concurrent requests)
+Transfer rate:          4784.24 [Kbytes/sec] received
+
+
+Concurrency Level:      32
+Time taken for tests:   7.232 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      35860000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    2765.30 [#/sec] (mean)
+Time per request:       11.572 [ms] (mean)
+Time per request:       0.362 [ms] (mean, across all concurrent requests)
+Transfer rate:          4841.98 [Kbytes/sec] received
+
+
+Concurrency Level:      32
+Time taken for tests:   5.107 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      35860000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    3916.17 [#/sec] (mean)
+Time per request:       8.171 [ms] (mean)
+Time per request:       0.255 [ms] (mean, across all concurrent requests)
+Transfer rate:          6857.12 [Kbytes/sec] received
+
+Concurrency Level:      32
+Time taken for tests:   5.100 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      35860000 bytes
+HTML transferred:       32140000 bytes
+Requests per second:    3921.79 [#/sec] (mean)
+Time per request:       8.160 [ms] (mean)
+Time per request:       0.255 [ms] (mean, across all concurrent requests)
+Transfer rate:          6866.96 [Kbytes/sec] received
+
+
+Concurrency Level:      32
+Time taken for tests:   1.696 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      4360000 bytes
+HTML transferred:       540000 bytes
+Requests per second:    11790.46 [#/sec] (mean)
+Time per request:       2.714 [ms] (mean)
+Time per request:       0.085 [ms] (mean, across all concurrent requests)
+Transfer rate:          2510.08 [Kbytes/sec] received
+
+Concurrency Level:      32
+Time taken for tests:   1.786 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      4360000 bytes
+HTML transferred:       540000 bytes
+Requests per second:    11195.74 [#/sec] (mean)
+Time per request:       2.858 [ms] (mean)
+Time per request:       0.089 [ms] (mean, across all concurrent requests)
+Transfer rate:          2383.47 [Kbytes/sec] received
+
